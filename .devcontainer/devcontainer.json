@@ -10,13 +10,13 @@
 	"remoteEnv": {
 		"PREFECT_MTLS_CRT": "/workspaces/prosnet-prefect-pipelines/certs/client.crt",
 		"PREFECT_MTLS_KEY": "/workspaces/prosnet-prefect-pipelines/certs/client.key"
-	}
+	},
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	// "features": {},
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],
 	// Use 'postCreateCommand' to run commands after the container is created.
-	// "postCreateCommand": "poetry config virtualenvs.create false && poetry lock && poetry install",
+	"postCreateCommand": "cp .prefect/profiles.toml ~/.prefect/profiles.toml && pip install ."
 	// Configure tool-specific properties.
 	// "customizations": {},
 	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
