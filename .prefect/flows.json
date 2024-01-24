@@ -1,0 +1,3 @@
+{
+  "create-typesense-index-from-sparql-query": "prosnet-prefect-pipelines/wikidata_index.py:create_typesense_index_from_sparql_query"
+}

@@ -9,7 +9,7 @@
 	},
 	"remoteEnv": {
 		"PREFECT_MTLS_CRT": "/workspaces/prosnet-prefect-pipelines/certs/client.crt",
-		"PREFECT_MTLS_KEY": "/workspaces/prosnet-prefect-pipelines/client.key"
+		"PREFECT_MTLS_KEY": "/workspaces/prosnet-prefect-pipelines/certs/client.key"
 	}
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	// "features": {},
