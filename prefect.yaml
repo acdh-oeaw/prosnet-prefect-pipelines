@@ -15,6 +15,7 @@ push:
 # pull section allows you to provide instructions for cloning this project in remote locations
 pull:
 - prefect.deployments.steps.git_clone:
+    id: clone-step
     repository: https://github.com/acdh-oeaw/prosnet-prefect-pipelines.git
     branch: main
     access_token:
