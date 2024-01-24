@@ -1,4 +1,5 @@
 from string import Template
+from typing import Optional
 from SPARQLWrapper import JSON, SPARQLWrapper
 from pydantic import BaseModel, Field, HttpUrl
 from prefect import task, flow
@@ -59,16 +60,29 @@ class Params(BaseModel):
     path_sparql_query: str = Field(..., description="Relativ path to SPARQL query.")
     sparql_endpoint: HttpUrl = Field("https://query.wikidata.org/", description="SPARQL endpoint to use, defaults to wikidata.")
     limit: int = Field(500, description="Limit to use for the SPARQL queries")
-    typesense_definition: dict | None = Field(None, description="Typesense definition to use, if None, incremental backup needs to be set.")
+    typesense_definition: Optional[dict] = Field(
+        {
+        "name": "prosnet-wikidata-person-index",
+        "fields": [
+            {"name": "id", "type": "string"},
+            {"name": "description", "type": "string"},
+            {"name": "label", "type": "string"},
+            {"name": "description", "type": "string"},
+            {"name": "date_of_birth", "type": "string"},
+            {"name": "date_of_death", "type": "string"},
+            {"name": "place_of_birth", "type": "string"},
+            {"name": "place_of_death", "type": "string"}
+        ]
+    },  description="Typesense definition to use, if None, incremental backup needs to be set.")
     incremental_update: bool = Field(False, description="If True, only objects changed since last run will be updated.")
-    incremental_date: str | None = Field(None, description="Date to use for incremental update, if None, last run of flow will be used.")
-    typesense_collection_name: str = Field(..., description="Name of the typesense collection to use.")
+    incremental_date: Optional[str] = Field(None, description="Date to use for incremental update, if None, last run of flow will be used.")
+    typesense_collection_name: str = Field("prosnet-wikidata-person-index", description="Name of the typesense collection to use.")
     typesense_api_key: str = Field("typesense-api-key", description="Name of the Prefect secrets block that holds the API key to use for typesense.")
     typesense_host: str = Field("typesense.acdh-dev.oeaw.ac.at", description="Host to use for typesense.")
 
 
 
-@flow()
+@flow(version="0.1.4")
 def create_typesense_index_from_sparql_query(params: Params):
     """Create a typesense index from a SPARQL data."""
     sparql_con = setup_sparql_connection(params.sparql_endpoint)

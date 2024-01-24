@@ -1,0 +1,4 @@
+active = "default"
+
+[profiles.default]
+PREFECT_API_URL = "https://prefect2.acdh-ch-dev.oeaw.ac.at/api"
