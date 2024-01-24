@@ -63,7 +63,7 @@ class Params(BaseModel):
     incremental_update: bool = Field(False, description="If True, only objects changed since last run will be updated.")
     incremental_date: str | None = Field(None, description="Date to use for incremental update, if None, last run of flow will be used.")
     typesense_collection_name: str = Field(..., description="Name of the typesense collection to use.")
-    typesense_api_key: str = Field("typesense_api_key", description="Name of the Prefect secrets block that holds the API key to use for typesense.")
+    typesense_api_key: str = Field("typesense-api-key", description="Name of the Prefect secrets block that holds the API key to use for typesense.")
     typesense_host: str = Field("typesense.acdh-dev.oeaw.ac.at", description="Host to use for typesense.")
 
 
