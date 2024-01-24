@@ -69,8 +69,8 @@ class Params(BaseModel):
 
 
 @flow()
-def create_typesense_definition_from_sparql_query(params: Params):
-    """Create a typesense definition from a SPARQL query."""
+def create_typesense_index_from_sparql_query(params: Params):
+    """Create a typesense index from a SPARQL data."""
     sparql_con = setup_sparql_connection(params.sparql_endpoint)
     sparql_count_query, sparql_query = create_sparql_queries(params.path_sparql_query, params.incremental_update, params.incremental_date)
     counts = retrieve_data_from_sparql_query(sparql_count_query, sparql_con, incremental_date=params.incremental_date, count_query=True)
