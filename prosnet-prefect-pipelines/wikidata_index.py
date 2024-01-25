@@ -2,7 +2,7 @@ from string import Template
 from typing import List, Optional
 from SPARQLWrapper import JSON, SPARQLWrapper
 from pydantic import BaseModel, Field, HttpUrl
-from prefect import task, flow
+from prefect import get_run_logger, task, flow
 from prefect.concurrency.sync import rate_limit
 import typesense
 from .push_to_typesense import push_data_to_typesense_flow, Params as PushParams
@@ -12,6 +12,8 @@ from .push_to_typesense import push_data_to_typesense_flow, Params as PushParams
 @task()
 def retrieve_data_from_sparql_query(sparql_query, sparql_con, offset=None, limit=None, incremental_date=False, count_query=False):
     """Retrieve data from a SPARQL query."""
+    logger = get_run_logger()
+    logger.info(f"Retrieving data from SPARQL query: {sparql_query}")
     if not count_query:
         rate_limit("wikidata-sparql-limit")
         query = Template(sparql_query).substitute(offset=offset, limit=limit)
@@ -84,7 +86,7 @@ class Params(BaseModel):
 
 
 
-@flow(version="0.1.7")
+@flow(version="0.1.8")
 def create_typesense_index_from_sparql_query(params: Params):
     """Create a typesense index from a SPARQL data."""
     sparql_con = setup_sparql_connection(params.sparql_endpoint)
