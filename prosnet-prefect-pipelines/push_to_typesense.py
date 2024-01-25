@@ -30,7 +30,7 @@ def get_or_create_typesense_collection(collection_name, typesense_con, typesense
             collection = typesense_con.collections.create(typesense_definition)
     else:
         collection = typesense_con.collections[collection_name].retrieve()
-    return collection.name
+    return collection["name"]
 
 @prefect.task()
 def push_data_to_typesense(client, collection_name, data):
