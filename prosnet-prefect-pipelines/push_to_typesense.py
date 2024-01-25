@@ -22,7 +22,11 @@ def setup_typesense_connection(typesense_api_key, typesense_host):
 def get_or_create_typesense_collection(collection_name, typesense_con, typesense_definition):
     """Get or create a typesense collection."""
     if typesense_definition:
-        collection = typesense_con.collections.upsert(typesense_definition)
+        cols = typesense_con.collections.retrieve()
+        if collection_name in [col["name"] for col in cols]:
+            collection = typesense_con.collections[collection_name]
+        else:
+            collection = typesense_con.collections.upsert(typesense_definition)
     else:
         collection = typesense_con.collections[collection_name]
     return collection
