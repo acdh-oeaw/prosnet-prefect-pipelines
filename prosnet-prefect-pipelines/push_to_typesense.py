@@ -4,7 +4,7 @@ import prefect
 from pydantic import BaseModel, Field
 import typesense
 
-@prefect.task(cache_key_fn=prefect.tasks.task_input_hash, cache_expiration=timedelta(days=1))
+@prefect.task()
 def setup_typesense_connection(typesense_api_key, typesense_host):
     """Setup a typesense connection."""
     api_key = prefect.blocks.system.Secret.load(typesense_api_key).get()
@@ -19,7 +19,7 @@ def setup_typesense_connection(typesense_api_key, typesense_host):
     })
     return client
 
-@prefect.task(cache_key_fn=prefect.tasks.task_input_hash, cache_expiration=timedelta(days=1))
+@prefect.task()
 def get_or_create_typesense_collection(collection_name, typesense_con, typesense_definition):
     """Get or create a typesense collection."""
     if typesense_definition:
