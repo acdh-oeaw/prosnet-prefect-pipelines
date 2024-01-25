@@ -6,7 +6,7 @@ import typesense
 @prefect.task()
 def setup_typesense_connection(typesense_api_key, typesense_host):
     """Setup a typesense connection."""
-    api_key = prefect.blocks.system.Secrets.load(typesense_api_key).get()
+    api_key = prefect.blocks.system.Secret.load(typesense_api_key).get()
     client = typesense.Client({
     'api_key': api_key,
     'nodes': [{
