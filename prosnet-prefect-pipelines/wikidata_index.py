@@ -80,11 +80,11 @@ class Params(BaseModel):
     typesense_collection_name: str = Field("prosnet-wikidata-person-index", description="Name of the typesense collection to use.")
     typesense_api_key: str = Field("typesense-api-key", description="Name of the Prefect secrets block that holds the API key to use for typesense.")
     typesense_host: str = Field("typesense.acdh-dev.oeaw.ac.at", description="Host to use for typesense.")
-    field_mapping: Optional[dict] = Field({"itemLabel": "label"}, description="List of tuples to map SPARQL fields to typesense fieldnames.")
+    field_mapping: dict = Field({"itemLabel": "label"}, description="List of tuples to map SPARQL fields to typesense fieldnames.")
 
 
 
-@flow(version="0.1.6")
+@flow(version="0.1.7")
 def create_typesense_index_from_sparql_query(params: Params):
     """Create a typesense index from a SPARQL data."""
     sparql_con = setup_sparql_connection(params.sparql_endpoint)
