@@ -52,6 +52,8 @@ class Params(BaseModel):
 @prefect.flow
 def push_data_to_typesense_flow(params: Params):
     """Push data to typesense."""
+    logger = prefect.get_run_logger()
+    logger.info(f"Pushing {len(params.data)} items to typesense.")
     typesense_con = setup_typesense_connection(params.typesense_api_key, params.typesense_host)
     collection_name = get_or_create_typesense_collection(params.typesense_collection_name, typesense_con, params.typesense_definition)
     push_data_to_typesense(typesense_con, collection_name, params.data)
