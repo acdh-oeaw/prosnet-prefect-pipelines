@@ -30,14 +30,14 @@ def get_or_create_typesense_collection(collection_name, typesense_con, typesense
             collection = typesense_con.collections.create(typesense_definition)
     else:
         collection = typesense_con.collections[collection_name].retrieve()
-    return collection
+    return collection.name
 
 @prefect.task()
-def push_data_to_typesense(collection, data):
+def push_data_to_typesense(client, collection_name, data):
     """Push data to typesense."""
     logger = prefect.get_run_logger()
     logger.info(f"Pushing {len(data)} items to typesense.")
-    res = collection.documents.import_(data, {'action': 'upsert'})
+    res = client.collections[collection_name].documents.import_(data, {'action': 'upsert'})
     logger.info(f"Got {res['success']} successes and {res['failed']} failures.")
     return True
 
@@ -53,6 +53,6 @@ class Params(BaseModel):
 def push_data_to_typesense_flow(params: Params):
     """Push data to typesense."""
     typesense_con = setup_typesense_connection(params.typesense_api_key, params.typesense_host)
-    collection = get_or_create_typesense_collection(params.typesense_collection_name, typesense_con, params.typesense_definition)
-    push_data_to_typesense(collection, params.data)
+    collection_name = get_or_create_typesense_collection(params.typesense_collection_name, typesense_con, params.typesense_definition)
+    push_data_to_typesense(typesense_con, collection_name, params.data)
 
