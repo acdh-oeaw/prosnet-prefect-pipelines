@@ -38,7 +38,7 @@ def push_data_to_typesense(client, collection_name, data):
     logger = prefect.get_run_logger()
     logger.info(f"Pushing {len(data)} items to typesense.")
     res = client.collections[collection_name].documents.import_(data, {'action': 'upsert'})
-    logger.info(f"Got {res['success']} successes and {res['failed']} failures.")
+    logger.info(f"res : {res}")
     return True
 
 class Params(BaseModel):
