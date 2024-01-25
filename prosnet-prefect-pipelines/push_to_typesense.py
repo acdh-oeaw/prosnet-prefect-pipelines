@@ -26,7 +26,7 @@ def get_or_create_typesense_collection(collection_name, typesense_con, typesense
         if collection_name in [col["name"] for col in cols]:
             collection = typesense_con.collections[collection_name]
         else:
-            collection = typesense_con.collections.upsert(typesense_definition)
+            collection = typesense_con.collections.create(typesense_definition)
     else:
         collection = typesense_con.collections[collection_name]
     return collection
