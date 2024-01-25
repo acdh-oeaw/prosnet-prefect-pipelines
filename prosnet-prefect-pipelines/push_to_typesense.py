@@ -1,9 +1,10 @@
 
+from datetime import timedelta
 import prefect
 from pydantic import BaseModel, Field
 import typesense
 
-@prefect.task()
+@prefect.task(cache_key_fn=prefect.tasks.task_input_hash, cache_expiration=timedelta(days=1))
 def setup_typesense_connection(typesense_api_key, typesense_host):
     """Setup a typesense connection."""
     api_key = prefect.blocks.system.Secret.load(typesense_api_key).get()
@@ -18,17 +19,17 @@ def setup_typesense_connection(typesense_api_key, typesense_host):
     })
     return client
 
-@prefect.task()
+@prefect.task(cache_key_fn=prefect.tasks.task_input_hash, cache_expiration=timedelta(days=1))
 def get_or_create_typesense_collection(collection_name, typesense_con, typesense_definition):
     """Get or create a typesense collection."""
     if typesense_definition:
         cols = typesense_con.collections.retrieve()
         if collection_name in [col["name"] for col in cols]:
-            collection = typesense_con.collections[collection_name]
+            collection = typesense_con.collections[collection_name].retrieve()
         else:
             collection = typesense_con.collections.create(typesense_definition)
     else:
-        collection = typesense_con.collections[collection_name]
+        collection = typesense_con.collections[collection_name].retrieve()
     return collection
 
 @prefect.task()
