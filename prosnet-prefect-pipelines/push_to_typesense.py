@@ -36,6 +36,7 @@ def get_or_create_typesense_collection(collection_name, typesense_con, typesense
 def push_data_to_typesense(client, collection_name, data):
     """Push data to typesense."""
     logger = prefect.get_run_logger()
+    logger.info(f"using collection {collection_name}")
     logger.info(f"Pushing {len(data)} items to typesense.")
     res = client.collections[collection_name].documents.import_(data, {'action': 'upsert'})
     logger.info(f"res : {res}")
