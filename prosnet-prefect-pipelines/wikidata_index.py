@@ -72,7 +72,7 @@ def setup_sparql_connection(endpoint):
 class Params(BaseModel):
     path_sparql_query: str = Field(default="prosnet-prefect-pipelines/sparql/wikidata-person.sparql", description="Relativ path to SPARQL query.")
     sparql_endpoint: HttpUrl = Field(default="https://query.wikidata.org/sparql", description="SPARQL endpoint to use, defaults to wikidata.")
-    limit: int = Field(default=50, description="Limit to use for the SPARQL queries")
+    limit: int = Field(default=200, description="Limit to use for the SPARQL queries")
     typesense_definition: dict = Field(default={
         "name": "prosnet-wikidata-person-index",
         "fields": [
@@ -103,7 +103,7 @@ class Params(BaseModel):
 
 
 @flow(version="0.1.13")
-def create_typesense_index_from_sparql_query(params: Params):
+def create_typesense_index_from_sparql_query(params: Params = Params()):
     """Create a typesense index from a SPARQL data."""
     sparql_con = setup_sparql_connection(params.sparql_endpoint)
     sparql_count_query, sparql_query = create_sparql_queries(params.path_sparql_query, params.incremental_update, params.incremental_date)
