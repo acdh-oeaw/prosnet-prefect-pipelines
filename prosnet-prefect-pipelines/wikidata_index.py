@@ -86,7 +86,7 @@ class Params(BaseModel):
         ]
     },  description="Typesense definition to use, if None, incremental backup needs to be set.")
     incremental_update: bool = Field(default=False, description="If True, only objects changed since last run will be updated.")
-    incremental_date: str = Field(deafult=None, description="Date to use for incremental update, if None, last run of flow will be used.")
+    incremental_date: str = Field(default=None, description="Date to use for incremental update, if None, last run of flow will be used.")
     typesense_collection_name: str = Field(default="prosnet-wikidata-person-index", description="Name of the typesense collection to use.")
     typesense_api_key: str = Field(default="typesense-api-key", description="Name of the Prefect secrets block that holds the API key to use for typesense.")
     typesense_host: str = Field(default="typesense.acdh-dev.oeaw.ac.at", description="Host to use for typesense.")
