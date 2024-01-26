@@ -4,6 +4,7 @@ from typing import List, Optional
 from SPARQLWrapper import JSON, SPARQLWrapper
 from pydantic import BaseModel, Field, HttpUrl
 from prefect import get_run_logger, task, flow
+from prefect.tasks import exponential_backoff
 from prefect.concurrency.sync import rate_limit
 import typesense
 from push_to_typesense import push_data_to_typesense_flow, Params as PushParams
@@ -11,7 +12,7 @@ from push_to_typesense import push_data_to_typesense_flow, Params as PushParams
 def date_postprocessing(x):
     return x.split("T")[0]
 
-@task()
+@task(retries=6, retry_delay_seconds=exponential_backoff(backoff_factor=30))
 def retrieve_data_from_sparql_query(sparql_query, sparql_con, offset=None, limit=None, incremental_date=False, count_query=False):
     """Retrieve data from a SPARQL query."""
     logger = get_run_logger()
@@ -101,7 +102,7 @@ class Params(BaseModel):
 
 
 
-@flow(version="0.1.11")
+@flow(version="0.1.12")
 def create_typesense_index_from_sparql_query(params: Params):
     """Create a typesense index from a SPARQL data."""
     sparql_con = setup_sparql_connection(params.sparql_endpoint)
@@ -118,5 +119,5 @@ def create_typesense_index_from_sparql_query(params: Params):
             data=typesense_data
         ))
 
-# if __name__ == "__main__":
-#     create_typesense_index_from_sparql_query(Params())
+if __name__ == "__main__":
+    create_typesense_index_from_sparql_query(Params())
