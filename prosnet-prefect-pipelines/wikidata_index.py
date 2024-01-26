@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field, HttpUrl
 from prefect import get_run_logger, task, flow
 from prefect.concurrency.sync import rate_limit
 import typesense
-from .push_to_typesense import push_data_to_typesense_flow, Params as PushParams
+from push_to_typesense import push_data_to_typesense_flow, Params as PushParams
 
 
 
@@ -34,6 +34,8 @@ def create_sparql_queries(path_sparql_query, incremental_update, incremental_dat
             for ix, line in enumerate(sparql_query):
                 if line.startswith("#REMOVE_INCREMENTAL "):
                     sparql_query[ix] = line.replace("#REMOVE_INCREMENTAL ", "").replace("{{INCREMENTAL_DATE}}", incremental_date)
+        elif incremental_update and incremental_date is None:
+            raise ValueError("incremental_date must be set if incremental_update is True.")
         sparql_query_count = "".join(["SELECT (COUNT(DISTINCT(?item)) AS ?count)\n", *sparql_query[1:-2]])
         sparql_query = "".join(sparql_query)
     return sparql_query_count, sparql_query
@@ -63,20 +65,19 @@ def setup_sparql_connection(endpoint):
     return sparql
 
 class Params(BaseModel):
-    path_sparql_query: str = Field(..., description="Relativ path to SPARQL query.")
-    sparql_endpoint: HttpUrl = Field("https://query.wikidata.org/", description="SPARQL endpoint to use, defaults to wikidata.")
-    limit: int = Field(500, description="Limit to use for the SPARQL queries")
+    path_sparql_query: str = Field("prosnet-prefect-pipelines/sparql/wikidata-person.sparql", description="Relativ path to SPARQL query.")
+    sparql_endpoint: HttpUrl = Field("https://query.wikidata.org/sparql", description="SPARQL endpoint to use, defaults to wikidata.")
+    limit: int = Field(50, description="Limit to use for the SPARQL queries")
     typesense_definition: dict = Field({
         "name": "prosnet-wikidata-person-index",
         "fields": [
             {"name": "id", "type": "string"},
-            {"name": "description", "type": "string"},
+            {"name": "description", "type": "string", "optional": True},
             {"name": "label", "type": "string"},
-            {"name": "description", "type": "string"},
-            {"name": "date_of_birth", "type": "string"},
-            {"name": "date_of_death", "type": "string"},
-            {"name": "place_of_birth", "type": "string"},
-            {"name": "place_of_death", "type": "string"}
+            {"name": "date_of_birth", "type": "string", "optional": True},
+            {"name": "date_of_death", "type": "string", "optional": True},
+            {"name": "place_of_birth", "type": "string", "optional": True},
+            {"name": "place_of_death", "type": "string", "optional": True},
         ]
     },  description="Typesense definition to use, if None, incremental backup needs to be set.")
     incremental_update: bool = Field(False, description="If True, only objects changed since last run will be updated.")
@@ -88,7 +89,7 @@ class Params(BaseModel):
 
 
 
-@flow(version="0.1.9")
+@flow(version="0.1.10")
 def create_typesense_index_from_sparql_query(params: Params):
     """Create a typesense index from a SPARQL data."""
     sparql_con = setup_sparql_connection(params.sparql_endpoint)
@@ -105,3 +106,5 @@ def create_typesense_index_from_sparql_query(params: Params):
             data=typesense_data
         ))
 
+if __name__ == "__main__":
+    create_typesense_index_from_sparql_query(Params())

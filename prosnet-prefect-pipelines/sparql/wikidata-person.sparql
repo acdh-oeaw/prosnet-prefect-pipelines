@@ -1,16 +1,24 @@
-SELECT (?item as ?id) ?description ?itemLabel ?date_of_birth ?date_of_death ?place_of_birth ?place_of_death
+SELECT ?item ?itemLabel ?date_of_birth ?date_of_death ?description
 WHERE {
-  {?item wdt:P27 wd:Q40 } UNION 
-  {?item wdt:P27 wd:Q28513} UNION 
-  {?item wdt:P27 wd:Q131964} UNION
-  {?item wdt:P27 wd:Q699964} .
-  ?item wdt:P569 ?date_of_birth .
-  ?item wdt:P570 ?date_of_death .
-  FILTER(?date_of_birth < "1950-01-01"^^xsd:dateTime)
-  FILTER(?date_of_birth > "1358-01-01"^^xsd:dateTime)
+  {
+    SELECT DISTINCT ?item ?date_of_birth
+           WHERE {
+             #{?item wdt:P27 wd:Q40 } UNION 
+             {?item wdt:P27 wd:Q28513} UNION 
+              {?item wdt:P27 wd:Q131964} UNION
+              {?item wdt:P27 wd:Q699964} .
+             ?item wdt:P569 ?date_of_birth .
+               #REMOVE_INCREMENTAL ?item schema:dateModified ?date_modified .
+              #REMOVE_INCREMENTAL FILTER(?date_modified > "{{INCREMENTAL_DATE}}"^^xsd:dateTime)
+           }
+          ORDER BY ?item
+          LIMIT $limit
+          OFFSET $offset
+  } 
+  OPTIONAL{?item wdt:P570 ?date_of_death .}
+  OPTIONAL{?item schema:description ?description .
+          FILTER(langmatches(lang(?description), "de"))
+          }
   SERVICE wikibase:label { bd:serviceParam wikibase:language "de,en" }
-  #REMOVE_INCREMENTAL ?item schema:dateModified ?date_modified .
-  #REMOVE_INCREMENTAL FILTER(?date_modified > "{{INCREMENTAL_DATE}}"^^xsd:dateTime)
   }
-  LIMIT $limit
-  OFFSET $offset
+  
