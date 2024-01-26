@@ -1,4 +1,4 @@
-SELECT ?item ?itemLabel ?date_of_birth ?date_of_death ?description
+SELECT (?item as ?id) ?itemLabel ?date_of_birth ?date_of_death ?description
 WHERE {
   {
     SELECT DISTINCT ?item ?date_of_birth
