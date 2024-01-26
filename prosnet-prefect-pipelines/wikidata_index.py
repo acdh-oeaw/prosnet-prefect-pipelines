@@ -1,3 +1,4 @@
+import re
 from string import Template
 from typing import List, Optional
 from SPARQLWrapper import JSON, SPARQLWrapper
@@ -7,7 +8,8 @@ from prefect.concurrency.sync import rate_limit
 import typesense
 from push_to_typesense import push_data_to_typesense_flow, Params as PushParams
 
-
+def date_postprocessing(x):
+    return x.split("T")[0]
 
 @task()
 def retrieve_data_from_sparql_query(sparql_query, sparql_con, offset=None, limit=None, incremental_date=False, count_query=False):
@@ -36,14 +38,14 @@ def create_sparql_queries(path_sparql_query, incremental_update, incremental_dat
                     sparql_query[ix] = line.replace("#REMOVE_INCREMENTAL ", "").replace("{{INCREMENTAL_DATE}}", incremental_date)
         elif incremental_update and incremental_date is None:
             raise ValueError("incremental_date must be set if incremental_update is True.")
-        sparql_query_count = "".join(["SELECT (COUNT(DISTINCT(?item)) AS ?count)\n", *sparql_query[1:-2]])
         sparql_query = "".join(sparql_query)
+        sparql_query_count = "SELECT (COUNT(?item) AS ?count)\nWHERE {\n" + re.search(r"WHERE.*WHERE\s*\{(.*)\}\n\s*ORDER", sparql_query, flags=re.M|re.DOTALL).group(1) + "\n}"
     return sparql_query_count, sparql_query
 
 
 
 @task()
-def create_typesense_data_from_sparql_data(sparql_data, field_mapping):
+def create_typesense_data_from_sparql_data(sparql_data, field_mapping, postprocessing_functions):
     """Create typesense data from SPARQL data."""
     res = []
     for item in sparql_data["results"]["bindings"]:
@@ -51,6 +53,8 @@ def create_typesense_data_from_sparql_data(sparql_data, field_mapping):
         for key, value in item.items():
             if key in field_mapping:
                 key = field_mapping[key]
+            if key in postprocessing_functions:
+                value["value"] = globals()[postprocessing_functions[key]](value["value"])
             if key == "id":
                 res2["id"] = value["value"].split("/")[-1]
             else:
@@ -85,11 +89,19 @@ class Params(BaseModel):
     typesense_collection_name: str = Field("prosnet-wikidata-person-index", description="Name of the typesense collection to use.")
     typesense_api_key: str = Field("typesense-api-key", description="Name of the Prefect secrets block that holds the API key to use for typesense.")
     typesense_host: str = Field("typesense.acdh-dev.oeaw.ac.at", description="Host to use for typesense.")
-    field_mapping: dict = Field({"itemLabel": "label"}, description="List of tuples to map SPARQL fields to typesense fieldnames.")
+    field_mapping: dict = Field({
+        "itemLabel": "label",
+        "place_of_birthLabel": "place_of_birth",
+        "place_of_deathLabel": "place_of_death",
+        }, description="List of tuples to map SPARQL fields to typesense fieldnames.")
+    data_postprocessing_functions: dict = Field({
+        "date_of_birth": "date_postprocessing",
+        "date_of_death": "date_postprocessing",
+        }, description="Dict of functions to apply to values before pushing them to typesense.")
 
 
 
-@flow(version="0.1.10")
+@flow(version="0.1.11")
 def create_typesense_index_from_sparql_query(params: Params):
     """Create a typesense index from a SPARQL data."""
     sparql_con = setup_sparql_connection(params.sparql_endpoint)
@@ -97,7 +109,7 @@ def create_typesense_index_from_sparql_query(params: Params):
     counts = retrieve_data_from_sparql_query(sparql_count_query, sparql_con, incremental_date=params.incremental_date, count_query=True)
     for offset in range(0, int(counts), params.limit):
         sparql_data = retrieve_data_from_sparql_query.submit(sparql_query, sparql_con, offset, params.limit, incremental_date=params.incremental_date)
-        typesense_data = create_typesense_data_from_sparql_data(sparql_data, params.field_mapping)
+        typesense_data = create_typesense_data_from_sparql_data(sparql_data, params.field_mapping, params.data_postprocessing_functions)
         push_data_to_typesense_flow(PushParams(
             typesense_collection_name=params.typesense_collection_name,
             typesense_api_key=params.typesense_api_key,
