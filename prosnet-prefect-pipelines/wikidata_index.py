@@ -118,5 +118,5 @@ def create_typesense_index_from_sparql_query(params: Params):
             data=typesense_data
         ))
 
-if __name__ == "__main__":
-    create_typesense_index_from_sparql_query(Params())
+# if __name__ == "__main__":
+#     create_typesense_index_from_sparql_query(Params())
