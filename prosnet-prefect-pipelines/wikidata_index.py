@@ -18,9 +18,9 @@ def label_creator_person(name, date_of_birth, date_of_death, description):
     if date_of_birth is not None or date_of_death is not None:
         label += " ("
         if date_of_birth is not None:
-            label += date_of_birth
+            label += date_of_birth.split("-")[0]
         if date_of_death is not None:
-            label += " - " + date_of_death
+            label += " - " + date_of_death.split("-")[0]
         label += ")"
     if description is not None:
         label += ": " + description
@@ -126,7 +126,7 @@ class Params(BaseModel):
 
 
 
-@flow(version="0.1.16")
+@flow(version="0.1.17")
 def create_typesense_index_from_sparql_query(params: Params = Params()):
     """Create a typesense index from a SPARQL data."""
     sparql_con = setup_sparql_connection(params.sparql_endpoint)
