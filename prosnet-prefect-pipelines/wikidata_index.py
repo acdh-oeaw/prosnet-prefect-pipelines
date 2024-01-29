@@ -126,7 +126,7 @@ class Params(BaseModel):
 
 
 
-@flow(version="0.1.15")
+@flow(version="0.1.16")
 def create_typesense_index_from_sparql_query(params: Params = Params()):
     """Create a typesense index from a SPARQL data."""
     sparql_con = setup_sparql_connection(params.sparql_endpoint)
