@@ -9,6 +9,7 @@ from prefect.tasks import exponential_backoff
 from prefect.concurrency.sync import rate_limit
 import typesense
 from push_to_typesense import push_data_to_typesense_flow, Params as PushParams
+from prefect.artifacts import create_markdown_artifact
 
 def date_postprocessing(x):
     return x.split("T")[0]
@@ -31,12 +32,13 @@ def label_creator_person(name, date_of_birth, date_of_death, description):
 def retrieve_data_from_sparql_query(sparql_query, sparql_con, offset=None, limit=None, incremental_date=False, count_query=False):
     """Retrieve data from a SPARQL query."""
     logger = get_run_logger()
-    logger.info(f"Retrieving data from SPARQL query: {sparql_query}")
     if not count_query:
         rate_limit("wikidata-sparql-limit")
         query = Template(sparql_query).substitute(offset=offset, limit=limit)
+        logger.info(f"Retrieving data from SPARQL query: {query}")
     else:
         query = sparql_query
+        logger.info(f"Retrieving count from SPARQL query: {query}")
     sparql_con.setQuery(query)
     if count_query:
         res = sparql_con.query().convert()
@@ -126,15 +128,19 @@ class Params(BaseModel):
 
 
 
-@flow(version="0.1.18")
+@flow(version="0.1.20")
 def create_typesense_index_from_sparql_query(params: Params = Params()):
     """Create a typesense index from a SPARQL data."""
     sparql_con = setup_sparql_connection(params.sparql_endpoint)
     sparql_count_query, sparql_query = create_sparql_queries(params.path_sparql_query, params.incremental_update, params.incremental_date)
     counts = retrieve_data_from_sparql_query(sparql_count_query, sparql_con, incremental_date=params.incremental_date, count_query=True)
+    counts_typesense = 0
     for offset in range(0, int(counts), params.limit):
         sparql_data = retrieve_data_from_sparql_query.submit(sparql_query, sparql_con, offset, params.limit, incremental_date=params.incremental_date)
+        if len(sparql_data["results"]["bindings"]) == 0:
+            break
         typesense_data = create_typesense_data_from_sparql_data(sparql_data, params.field_mapping, params.data_postprocessing_functions, params.label_creator_function)
+        counts_typesense += len(typesense_data)
         push_data_to_typesense_flow(PushParams(
             typesense_collection_name=params.typesense_collection_name,
             typesense_api_key=params.typesense_api_key,
@@ -142,6 +148,18 @@ def create_typesense_index_from_sparql_query(params: Params = Params()):
             typesense_definition=params.typesense_definition,
             data=typesense_data
         ))
+    logger = get_run_logger()
+    logger.info(f"Pushed {counts_typesense} objects to typesense.")
+    typense_report = f"""
+# Wikidata Person Index
+
+## Pushed {counts_typesense} objects to typesense.
+"""
+    create_markdown_artifact(
+        key="typesense-push-report",
+        markdown=typense_report,
+        description="Report of objects pushed to typesense.",
+    )
 
 if __name__ == "__main__":
     create_typesense_index_from_sparql_query(Params())
