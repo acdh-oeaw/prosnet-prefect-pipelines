@@ -78,7 +78,7 @@ def create_typesense_data_from_sparql_data(sparql_data, field_mapping, postproce
             else:
                 res2[key] = value["value"]
         if label_creator_function:
-            res2["label"] = globals()[label_creator_function](**res2)
+            res2["label"] = globals()[label_creator_function](res2["name"], res2["date_of_birth"], res2["date_of_death"], res2["description"])
         res.append(res2)
     return res
 
@@ -123,7 +123,7 @@ class Params(BaseModel):
 
 
 
-@flow(version="0.1.14")
+@flow(version="0.1.15")
 def create_typesense_index_from_sparql_query(params: Params = Params()):
     """Create a typesense index from a SPARQL data."""
     sparql_con = setup_sparql_connection(params.sparql_endpoint)
