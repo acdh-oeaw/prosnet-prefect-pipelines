@@ -1,3 +1,4 @@
+import datetime
 import re
 from string import Template
 from typing import List, Optional
@@ -11,6 +12,20 @@ from push_to_typesense import push_data_to_typesense_flow, Params as PushParams
 
 def date_postprocessing(x):
     return x.split("T")[0]
+
+def label_creator_person(name, date_of_birth, date_of_death, description):
+    label = name
+    if date_of_birth or date_of_death:
+        label += " ("
+        if date_of_birth:
+            label += date_of_birth
+        if date_of_death:
+            label += " - " + date_of_death
+        label += ")"
+    if description:
+        label += ": " + description
+    return label
+
 
 @task(retries=6, retry_delay_seconds=exponential_backoff(backoff_factor=30))
 def retrieve_data_from_sparql_query(sparql_query, sparql_con, offset=None, limit=None, incremental_date=False, count_query=False):
@@ -34,6 +49,7 @@ def create_sparql_queries(path_sparql_query, incremental_update, incremental_dat
     with open(path_sparql_query) as f:
         sparql_query = f.readlines()
         if incremental_update and incremental_date:
+            incremental_date = (datetime.datetime.now() - datetime.timedelta(days=incremental_date)).strftime("%Y-%m-%d")
             for ix, line in enumerate(sparql_query):
                 if line.startswith("#REMOVE_INCREMENTAL "):
                     sparql_query[ix] = line.replace("#REMOVE_INCREMENTAL ", "").replace("{{INCREMENTAL_DATE}}", incremental_date)
@@ -46,7 +62,7 @@ def create_sparql_queries(path_sparql_query, incremental_update, incremental_dat
 
 
 @task()
-def create_typesense_data_from_sparql_data(sparql_data, field_mapping, postprocessing_functions):
+def create_typesense_data_from_sparql_data(sparql_data, field_mapping, postprocessing_functions, label_creator_function=False):
     """Create typesense data from SPARQL data."""
     res = []
     for item in sparql_data["results"]["bindings"]:
@@ -57,9 +73,12 @@ def create_typesense_data_from_sparql_data(sparql_data, field_mapping, postproce
             if key in postprocessing_functions:
                 value["value"] = globals()[postprocessing_functions[key]](value["value"])
             if key == "id":
-                res2["id"] = value["value"].split("/")[-1]
+                q = value["value"].split("/")[-1]
+                res2["id"] = f"http://www.wikidata.org/entity/{q}"
             else:
                 res2[key] = value["value"]
+        if label_creator_function:
+            res2["label"] = globals()[label_creator_function](**res2)
         res.append(res2)
     return res
 
@@ -79,6 +98,7 @@ class Params(BaseModel):
             {"name": "id", "type": "string"},
             {"name": "description", "type": "string", "optional": True},
             {"name": "label", "type": "string"},
+            {"name": "name", "type": "string", "optional": True},
             {"name": "date_of_birth", "type": "string", "optional": True},
             {"name": "date_of_death", "type": "string", "optional": True},
             {"name": "place_of_birth", "type": "string", "optional": True},
@@ -86,12 +106,12 @@ class Params(BaseModel):
         ]
     },  description="Typesense definition to use, if None, incremental backup needs to be set.")
     incremental_update: bool = Field(default=False, description="If True, only objects changed since last run will be updated.")
-    incremental_date: str = Field(default=None, description="Date to use for incremental update, if None, last run of flow will be used.")
+    incremental_date: int = Field(default=None, description="Number of days to retrieve update for (today - days).")
     typesense_collection_name: str = Field(default="prosnet-wikidata-person-index", description="Name of the typesense collection to use.")
     typesense_api_key: str = Field(default="typesense-api-key", description="Name of the Prefect secrets block that holds the API key to use for typesense.")
     typesense_host: str = Field(default="typesense.acdh-dev.oeaw.ac.at", description="Host to use for typesense.")
     field_mapping: dict = Field(default={
-        "itemLabel": "label",
+        "itemLabel": "name",
         "place_of_birthLabel": "place_of_birth",
         "place_of_deathLabel": "place_of_death",
         }, description="List of tuples to map SPARQL fields to typesense fieldnames.")
@@ -99,10 +119,11 @@ class Params(BaseModel):
         "date_of_birth": "date_postprocessing",
         "date_of_death": "date_postprocessing",
         }, description="Dict of functions to apply to values before pushing them to typesense.")
+    label_creator_function: str = Field(default="label_creator_person", description="Function to create the label field.")
 
 
 
-@flow(version="0.1.13")
+@flow(version="0.1.14")
 def create_typesense_index_from_sparql_query(params: Params = Params()):
     """Create a typesense index from a SPARQL data."""
     sparql_con = setup_sparql_connection(params.sparql_endpoint)
@@ -110,7 +131,7 @@ def create_typesense_index_from_sparql_query(params: Params = Params()):
     counts = retrieve_data_from_sparql_query(sparql_count_query, sparql_con, incremental_date=params.incremental_date, count_query=True)
     for offset in range(0, int(counts), params.limit):
         sparql_data = retrieve_data_from_sparql_query.submit(sparql_query, sparql_con, offset, params.limit, incremental_date=params.incremental_date)
-        typesense_data = create_typesense_data_from_sparql_data(sparql_data, params.field_mapping, params.data_postprocessing_functions)
+        typesense_data = create_typesense_data_from_sparql_data(sparql_data, params.field_mapping, params.data_postprocessing_functions, params.label_creator_function)
         push_data_to_typesense_flow(PushParams(
             typesense_collection_name=params.typesense_collection_name,
             typesense_api_key=params.typesense_api_key,
