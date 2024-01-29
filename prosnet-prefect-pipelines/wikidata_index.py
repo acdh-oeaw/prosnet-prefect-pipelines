@@ -15,14 +15,14 @@ def date_postprocessing(x):
 
 def label_creator_person(name, date_of_birth, date_of_death, description):
     label = name
-    if date_of_birth or date_of_death:
+    if date_of_birth is not None or date_of_death is not None:
         label += " ("
-        if date_of_birth:
+        if date_of_birth is not None:
             label += date_of_birth
-        if date_of_death:
+        if date_of_death is not None:
             label += " - " + date_of_death
         label += ")"
-    if description:
+    if description is not None:
         label += ": " + description
     return label
 
@@ -78,7 +78,10 @@ def create_typesense_data_from_sparql_data(sparql_data, field_mapping, postproce
             else:
                 res2[key] = value["value"]
         if label_creator_function:
-            res2["label"] = globals()[label_creator_function](res2["name"], res2["date_of_birth"], res2["date_of_death"], res2["description"])
+            res2["label"] = globals()[label_creator_function](res2["name"], 
+                                                              res2["date_of_birth"] if "date_of_birth" in res else None, 
+                                                              res2["date_of_death"] if "date_of_death" in res2 else None, 
+                                                              res2["description"] if "description" in res2 else None)
         res.append(res2)
     return res
 
