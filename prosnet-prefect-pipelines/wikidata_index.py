@@ -53,12 +53,12 @@ def create_sparql_queries(path_sparql_query, incremental_update, incremental_dat
         if incremental_update and incremental_date:
             incremental_date = (datetime.datetime.now() - datetime.timedelta(days=incremental_date)).strftime("%Y-%m-%d")
             for ix, line in enumerate(sparql_query):
-                if line.startswith("#REMOVE_INCREMENTAL "):
+                if "#REMOVE_INCREMENTAL" in line:
                     sparql_query[ix] = line.replace("#REMOVE_INCREMENTAL ", "").replace("{{INCREMENTAL_DATE}}", incremental_date)
         elif incremental_update and incremental_date is None:
             raise ValueError("incremental_date must be set if incremental_update is True.")
         sparql_query = "".join(sparql_query)
-        sparql_query_count = "SELECT (COUNT(?item) AS ?count)\nWHERE {\n" + re.search(r"WHERE.*WHERE\s*\{(.*)\}\n\s*ORDER", sparql_query, flags=re.M|re.DOTALL).group(1) + "\n}"
+        sparql_query_count = "SELECT (COUNT(DISTINCT ?item) AS ?count)\nWHERE {\n" + re.search(r"WHERE.*WHERE\s*\{(.*)\}\n\s*ORDER", sparql_query, flags=re.M|re.DOTALL).group(1) + "\n}"
     return sparql_query_count, sparql_query
 
 
@@ -137,8 +137,6 @@ def create_typesense_index_from_sparql_query(params: Params = Params()):
     counts_typesense = 0
     for offset in range(0, int(counts), params.limit):
         sparql_data = retrieve_data_from_sparql_query.submit(sparql_query, sparql_con, offset, params.limit, incremental_date=params.incremental_date)
-        if len(sparql_data["results"]["bindings"]) == 0:
-            break
         typesense_data = create_typesense_data_from_sparql_data(sparql_data, params.field_mapping, params.data_postprocessing_functions, params.label_creator_function)
         counts_typesense += len(typesense_data)
         push_data_to_typesense_flow(PushParams(
