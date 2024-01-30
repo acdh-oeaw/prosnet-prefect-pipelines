@@ -96,7 +96,7 @@ def create_typesense_data_from_sparql_data(sparql_data, field_mapping, postproce
 
 @task()
 def setup_sparql_connection(endpoint):
-    sparql = SPARQLWrapper(endpoint)
+    sparql = SPARQLWrapper(endpoint.__str__())
     sparql.setReturnFormat(JSON)
     return sparql
 
