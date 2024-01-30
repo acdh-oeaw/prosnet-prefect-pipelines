@@ -2,6 +2,7 @@
 from prefect import flow
 from pydantic import BaseModel, Field, HttpUrl
 from wikidata_index import create_typesense_index_from_sparql_query
+from wikidata_index import Params as BaseParams
 
     
 class Params(BaseModel):
@@ -39,4 +40,4 @@ class Params(BaseModel):
 
 @flow(version="0.1.1")
 def create_typesense_person_index_from_wikidata(params: Params):
-    create_typesense_index_from_sparql_query(params)
+    create_typesense_index_from_sparql_query(BaseParams(**params.model_dump()))
