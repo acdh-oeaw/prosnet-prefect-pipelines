@@ -14,17 +14,27 @@ from prefect.artifacts import create_markdown_artifact
 def date_postprocessing(x):
     return x.split("T")[0]
 
-def label_creator_person(name, date_of_birth, date_of_death, description):
-    label = name
-    if date_of_birth is not None or date_of_death is not None:
+def label_creator_person(data):
+    label = data["name"]
+    if "date_of_birth" in data or "date_of_death" in data:
         label += " ("
-        if date_of_birth is not None:
-            label += date_of_birth.split("-")[0]
-        if date_of_death is not None:
-            label += " - " + date_of_death.split("-")[0]
+        if "date_of_birth" in data:
+            if data["date_of_birth"] is not None:
+                label += data["date_of_birth"].split("-")[0]
+        if "date_of_death" in data:
+            if data["date_of_death"] is not None:
+                label += " - " + data["date_of_death"].split("-")[0]
         label += ")"
-    if description is not None:
-        label += ": " + description
+    if "description" in data:
+        if data["description"] is not None:
+            label += ": " + data["description"]
+    return label
+
+def label_creator_place(data):
+    label = data["name"]
+    if "country" in data:
+        if data["country"] is not None:
+            label += " (" + data["country"] + ")"
     return label
 
 
@@ -80,10 +90,7 @@ def create_typesense_data_from_sparql_data(sparql_data, field_mapping, postproce
             else:
                 res2[key] = value["value"]
         if label_creator_function:
-            res2["label"] = globals()[label_creator_function](res2["name"], 
-                                                              res2["date_of_birth"] if "date_of_birth" in res2 else None, 
-                                                              res2["date_of_death"] if "date_of_death" in res2 else None, 
-                                                              res2["description"] if "description" in res2 else None)
+            res2["label"] = globals()[label_creator_function](res2)
         res.append(res2)
     return res
 
