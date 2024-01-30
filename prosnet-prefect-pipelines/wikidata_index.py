@@ -140,12 +140,17 @@ def create_typesense_index_from_sparql_query(params: Params = Params()):
     """Create a typesense index from a SPARQL data."""
     sparql_con = setup_sparql_connection(params.sparql_endpoint)
     sparql_count_query, sparql_query = create_sparql_queries(params.path_sparql_query, params.incremental_update, params.incremental_date)
-    counts = retrieve_data_from_sparql_query(sparql_count_query, sparql_con, incremental_date=params.incremental_date, count_query=True)
+    #counts = retrieve_data_from_sparql_query(sparql_count_query, sparql_con, incremental_date=params.incremental_date, count_query=True)
     counts_typesense = 0
-    for offset in range(0, int(counts), params.limit):
+    offset = 0
+    while offset:
         sparql_data = retrieve_data_from_sparql_query.submit(sparql_query, sparql_con, offset, params.limit,  incremental_date=params.incremental_date)
         typesense_data = create_typesense_data_from_sparql_data(sparql_data, params.field_mapping, params.data_postprocessing_functions, params.label_creator_function)
-        counts_typesense += len(typesense_data)
+        c_1 = len(typesense_data)
+        counts_typesense += c_1
+        if c_1 == 0:
+            offset = False
+            break
         push_data_to_typesense_flow(PushParams(
             typesense_collection_name=params.typesense_collection_name,
             typesense_api_key=params.typesense_api_key,
@@ -153,6 +158,7 @@ def create_typesense_index_from_sparql_query(params: Params = Params()):
             typesense_definition=params.typesense_definition,
             data=typesense_data
         ))
+        offset += params.limit
     logger = get_run_logger()
     logger.info(f"Pushed {counts_typesense} objects to typesense.")
     typense_report = f"""
