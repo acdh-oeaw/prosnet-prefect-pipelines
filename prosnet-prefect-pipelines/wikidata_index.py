@@ -82,8 +82,9 @@ def create_typesense_data_from_sparql_data(sparql_data, field_mapping, postproce
         for key, value in item.items():
             if key in field_mapping:
                 key = field_mapping[key]
-            if key in postprocessing_functions:
-                value["value"] = globals()[postprocessing_functions[key]](value["value"])
+            if postprocessing_functions is not None:
+                if key in postprocessing_functions:
+                    value["value"] = globals()[postprocessing_functions[key]](value["value"])
             if key == "id":
                 q = value["value"].split("/")[-1]
                 res2["id"] = f"http://www.wikidata.org/entity/{q}"
