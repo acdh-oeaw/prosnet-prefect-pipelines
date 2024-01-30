@@ -1,7 +1,8 @@
 SELECT ?item ?country ?itemLabel ?countryLabel
 WHERE {
         {
-            SELECT DISTINCT ?item ?country WHERE {
+            SELECT DISTINCT ?item ?country 
+            WHERE {
                 ?ctype wdt:P279* wd:Q7930989 .
                 ?item wdt:P31 ?ctype .
                 ?item wdt:P17 ?country .

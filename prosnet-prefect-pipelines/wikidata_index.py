@@ -68,7 +68,7 @@ def create_sparql_queries(path_sparql_query, incremental_update, incremental_dat
         elif incremental_update and incremental_date is None:
             raise ValueError("incremental_date must be set if incremental_update is True.")
         sparql_query = "".join(sparql_query)
-        sparql_query_count = "SELECT (COUNT(DISTINCT ?item) AS ?count)\nWHERE {\n" + re.search(r"WHERE.*WHERE\s*\{(.*)\}\n\s*ORDER", sparql_query, flags=re.M|re.DOTALL).group(1) + "\n}"
+        sparql_query_count = "SELECT (COUNT(DISTINCT ?item) AS ?count)\nWHERE {\n" + re.search(r"WHERE.*WHERE\s*\{(.*)\}.*?LIMIT", sparql_query, flags=re.M|re.DOTALL).group(1) + "\n}"
     return sparql_query_count, sparql_query
 
 
@@ -118,7 +118,7 @@ class Params(BaseModel):
         ]
     },  description="Typesense definition to use, if None, incremental backup needs to be set.")
     incremental_update: bool = Field(default=True, description="If True, only objects changed since last run will be updated.")
-    incremental_date: int = Field(default=2, description="Number of days to retrieve update for (today - days).")
+    incremental_date: int | None = Field(default=None, description="Number of days to retrieve update for (today - days).")
     typesense_collection_name: str = Field(default="prosnet-wikidata-person-index", description="Name of the typesense collection to use.")
     typesense_api_key: str = Field(default="typesense-api-key", description="Name of the Prefect secrets block that holds the API key to use for typesense.")
     typesense_host: str = Field(default="typesense.acdh-dev.oeaw.ac.at", description="Host to use for typesense.")
@@ -127,7 +127,7 @@ class Params(BaseModel):
         "place_of_birthLabel": "place_of_birth",
         "place_of_deathLabel": "place_of_death",
         }, description="List of tuples to map SPARQL fields to typesense fieldnames.")
-    data_postprocessing_functions: dict = Field(default={
+    data_postprocessing_functions: dict | None = Field(default={
         "date_of_birth": "date_postprocessing",
         "date_of_death": "date_postprocessing",
         }, description="Dict of functions to apply to values before pushing them to typesense.")
@@ -143,7 +143,7 @@ def create_typesense_index_from_sparql_query(params: Params = Params()):
     counts = retrieve_data_from_sparql_query(sparql_count_query, sparql_con, incremental_date=params.incremental_date, count_query=True)
     counts_typesense = 0
     for offset in range(0, int(counts), params.limit):
-        sparql_data = retrieve_data_from_sparql_query.submit(sparql_query, sparql_con, offset, params.limit, incremental_date=params.incremental_date)
+        sparql_data = retrieve_data_from_sparql_query.submit(sparql_query, sparql_con, offset, params.limit,  incremental_date=params.incremental_date)
         typesense_data = create_typesense_data_from_sparql_data(sparql_data, params.field_mapping, params.data_postprocessing_functions, params.label_creator_function)
         counts_typesense += len(typesense_data)
         push_data_to_typesense_flow(PushParams(

@@ -8,7 +8,7 @@ WHERE {
               {?item wdt:P27 wd:Q131964} UNION
               {?item wdt:P27 wd:Q699964} .
              ?item wdt:P569 ?date_of_birth .
-               #REMOVE_INCREMENTAL ?item schema:dateModified ?date_modified .
+              #REMOVE_INCREMENTAL ?item schema:dateModified ?date_modified .
               #REMOVE_INCREMENTAL FILTER(?date_modified > "{{INCREMENTAL_DATE}}"^^xsd:dateTime)
            }
           ORDER BY ?item
