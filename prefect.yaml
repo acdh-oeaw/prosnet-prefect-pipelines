@@ -52,3 +52,19 @@ deployments:
     job_variables: {}
   schedule:
   is_schedule_active: true
+- name: prosnet_index_persons
+  version:
+  tags: []
+  description: Create a typesense index from a SPARQL data.
+  entrypoint: 
+    prosnet-prefect-pipelines/wikidata_index.py:create_typesense_index_from_sparql_query
+  parameters: {}
+  work_pool:
+    name: intavia
+    work_queue_name:
+    job_variables: {}
+  schedule:
+    cron: 0 5 * * *
+    timezone: UTC
+    day_or: true
+    active: true
