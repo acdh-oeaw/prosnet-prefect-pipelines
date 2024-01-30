@@ -1,0 +1,18 @@
+SELECT ?item ?country ?itemLabel ?countryLabel
+WHERE {
+        {
+            SELECT DISTINCT ?item ?country WHERE {
+                ?ctype wdt:P279* wd:Q7930989 .
+                ?item wdt:P31 ?ctype .
+                ?item wdt:P17 ?country .
+                ?country wdt:P31 wd:Q3624078 .
+                ?country wdt:P361 wd:Q46
+                #REMOVE_INCREMENTAL ?item schema:dateModified ?date_modified .
+                #REMOVE_INCREMENTAL FILTER(?date_modified > "{{INCREMENTAL_DATE}}"^^xsd:dateTime)
+                }
+          #ORDER BY ?item
+          LIMIT $limit
+          OFFSET $offset
+  }
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "de,en" }
+}
