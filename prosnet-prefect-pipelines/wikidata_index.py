@@ -143,7 +143,7 @@ def create_typesense_index_from_sparql_query(params: Params = Params()):
     #counts = retrieve_data_from_sparql_query(sparql_count_query, sparql_con, incremental_date=params.incremental_date, count_query=True)
     counts_typesense = 0
     offset = 0
-    while offset:
+    while offset >= 0:
         sparql_data = retrieve_data_from_sparql_query.submit(sparql_query, sparql_con, offset, params.limit,  incremental_date=params.incremental_date)
         typesense_data = create_typesense_data_from_sparql_data(sparql_data, params.field_mapping, params.data_postprocessing_functions, params.label_creator_function)
         c_1 = len(typesense_data)
