@@ -1,6 +1,6 @@
 from prefect import flow
 from pydantic import BaseModel, Field, HttpUrl
-from wikidata_index import create_typesense_index_from_sparql_query
+from wikidata_index import create_typesense_index_from_sparql_query, Params as BaseParams
 
 class Params(BaseModel):
     path_sparql_query: str = Field(default="prosnet-prefect-pipelines/sparql/wikidata-city.sparql", description="Relativ path to SPARQL query.")
@@ -30,4 +30,4 @@ class Params(BaseModel):
 
 @flow(version="0.1.1")
 def create_typesense_place_index_from_wikidata(params: Params):
-    create_typesense_index_from_sparql_query(params)
+    create_typesense_index_from_sparql_query(BaseParams(**params.model_dump()))

@@ -68,3 +68,35 @@ deployments:
     timezone: UTC
     day_or: true
     active: true
+- name: default
+  version:
+  tags: []
+  description:
+  entrypoint: 
+    prosnet-prefect-pipelines/wikidata_place_index.py:create_typesense_place_index_from_wikidata
+  parameters: {}
+  work_pool:
+    name: intavia
+    work_queue_name:
+    job_variables: {}
+  schedule:
+    cron: 0 4 * * *
+    timezone: UTC
+    day_or: true
+    active: true
+- name: default
+  version:
+  tags: []
+  description:
+  entrypoint: 
+    prosnet-prefect-pipelines/wikidata_person_index.py:create_typesense_person_index_from_wikidata
+  parameters: {}
+  work_pool:
+    name: intavia
+    work_queue_name:
+    job_variables: {}
+  schedule:
+    cron: 0 4 * * *
+    timezone: UTC
+    day_or: true
+    active: true
