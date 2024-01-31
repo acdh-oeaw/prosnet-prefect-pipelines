@@ -5,7 +5,9 @@ WHERE {
             WHERE {
                 ?ctype wdt:P279* wd:Q515 .
                 ?item wdt:P17 ?country .
-                ?country wdt:P31 wd:Q3624078 .
+                {?country wdt:P31 wd:Q3624078 .} UNION {
+                ?country wdt:P31 wd:Q6256  
+                }
                 ?country wdt:P30 wd:Q46 .
                 ?item wdt:P31 ?ctype .
                 #REMOVE_INCREMENTAL ?item schema:dateModified ?date_modified .
