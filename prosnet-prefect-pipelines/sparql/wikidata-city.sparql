@@ -3,11 +3,11 @@ WHERE {
         {
             SELECT DISTINCT ?item ?country 
             WHERE {
-                ?ctype wdt:P31/wdt:P279* wd:Q7930989 .
-                #?item wdt:P31 ?ctype .
+                ?ctype wdt:P279* wd:Q515 ..
                 ?item wdt:P17 ?country .
                 ?country wdt:P31 wd:Q3624078 .
                 ?country wdt:P361 wd:Q46
+                ?item wdt:P31 ?ctype .
                 #REMOVE_INCREMENTAL ?item schema:dateModified ?date_modified .
                 #REMOVE_INCREMENTAL FILTER(?date_modified > "{{INCREMENTAL_DATE}}"^^xsd:dateTime)
                 }
