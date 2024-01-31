@@ -3,7 +3,7 @@ WHERE {
         {
             SELECT DISTINCT ?item ?country 
             WHERE {
-                ?ctype wdt:P279* wd:Q515 ..
+                ?ctype wdt:P279* wd:Q515 .
                 ?item wdt:P17 ?country .
                 ?country wdt:P31 wd:Q3624078 .
                 ?country wdt:P361 wd:Q46
