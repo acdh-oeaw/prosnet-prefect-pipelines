@@ -7,7 +7,7 @@ class Params(BaseModel):
     sparql_endpoint: HttpUrl = Field(default="https://query.wikidata.org/sparql", description="SPARQL endpoint to use, defaults to wikidata.")
     limit: int = Field(default=100, description="Limit to use for the SPARQL queries")
     typesense_definition: dict = Field(default={
-        "name": "prosnet-wikidata-pace-index",
+        "name": "prosnet-wikidata-place-index",
         "fields": [
             {"name": "id", "type": "string"},
             {"name": "label", "type": "string"},
