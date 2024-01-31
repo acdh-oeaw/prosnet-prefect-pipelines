@@ -1,4 +1,4 @@
-SELECT ?item ?country ?itemLabel ?countryLabel
+SELECT (?item as ?id) ?country ?itemLabel ?countryLabel
 WHERE {
         {
             SELECT DISTINCT ?item ?country 

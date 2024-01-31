@@ -5,7 +5,7 @@ from wikidata_index import create_typesense_index_from_sparql_query, Params as B
 class Params(BaseModel):
     path_sparql_query: str = Field(default="prosnet-prefect-pipelines/sparql/wikidata-city.sparql", description="Relativ path to SPARQL query.")
     sparql_endpoint: HttpUrl = Field(default="https://query.wikidata.org/sparql", description="SPARQL endpoint to use, defaults to wikidata.")
-    limit: int = Field(default=50, description="Limit to use for the SPARQL queries")
+    limit: int = Field(default=100, description="Limit to use for the SPARQL queries")
     typesense_definition: dict = Field(default={
         "name": "prosnet-wikidata-city-index",
         "fields": [
