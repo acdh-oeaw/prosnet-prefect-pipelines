@@ -13,7 +13,7 @@ WHERE {
                 #REMOVE_INCREMENTAL ?item schema:dateModified ?date_modified .
                 #REMOVE_INCREMENTAL FILTER(?date_modified > "{{INCREMENTAL_DATE}}"^^xsd:dateTime)
                 }
-          #ORDER BY ?item
+          ORDER BY ?item
           LIMIT $limit
           OFFSET $offset
   }
