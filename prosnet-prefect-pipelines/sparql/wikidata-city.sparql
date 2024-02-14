@@ -1,9 +1,11 @@
-SELECT (?item as ?id) ?country ?itemLabel ?countryLabel
+SELECT (?item as ?id) ?country ?itemLabel ?countryLabel ?GN_FeatureCode ?coord
 WHERE {
         {
-            SELECT DISTINCT ?item ?country 
+            SELECT DISTINCT ?item ?country ?ctype
             WHERE {
                 ?ctype wdt:P279* wd:Q515 .
+              OPTIONAL{?ctype wdt:P279* ?b2 .
+                     ?b2    wdt:P2452 ?GN_FeatureCode}
                 ?item wdt:P17 ?country .
                 {?country wdt:P31 wd:Q3624078 .} UNION {
                 ?country wdt:P31 wd:Q6256  
@@ -17,5 +19,8 @@ WHERE {
           LIMIT $limit
           OFFSET $offset
   }
+  OPTIONAL{?ctype wdt:P279* ?b2 .
+                     ?b2    wdt:P2452 ?GN_FeatureCode}
+  OPTIONAL{?item wdt:P625 ?coord .}
   SERVICE wikibase:label { bd:serviceParam wikibase:language "de,en" }
 }

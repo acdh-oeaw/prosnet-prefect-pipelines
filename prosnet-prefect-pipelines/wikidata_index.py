@@ -35,7 +35,16 @@ def label_creator_place(data):
     if "country" in data:
         if data["country"] is not None:
             label += " (" + data["country"] + ")"
+    if "feature_code" in data:
+        if data["feature_code"] is not None:
+            label += " - " + data["feature_code"]
     return label
+
+def geopoint_creator(data):
+    if data.startswith("Point"):
+        long, lat = data.replace("Point(", "").replace(")", "").split(" ")
+        return [float(lat), float(long)]
+    return None
 
 
 @task(retries=6, retry_delay_seconds=exponential_backoff(backoff_factor=30))
@@ -136,7 +145,7 @@ class Params(BaseModel):
 
 
 
-@flow(version="0.1.22")
+@flow(version="0.1.23")
 def create_typesense_index_from_sparql_query(params: Params = Params()):
     """Create a typesense index from a SPARQL data."""
     sparql_con = setup_sparql_connection(params.sparql_endpoint)
