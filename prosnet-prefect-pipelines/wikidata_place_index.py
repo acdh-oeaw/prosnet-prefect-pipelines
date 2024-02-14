@@ -28,7 +28,7 @@ class Params(BaseModel):
         "GN_FeatureCode": "feature_code",
         "coord": "coordinates",
         }, description="List of tuples to map SPARQL fields to typesense fieldnames.")
-    data_postprocessing_functions: dict | None = Field(default={"coordinates": "geopoint_creator"}, description="Dict of functions to apply to values before pushing them to typesense.")
+    data_postprocessing_functions: dict = Field(default={"coordinates": "geopoint_creator"}, description="Dict of functions to apply to values before pushing them to typesense.")
     label_creator_function: str = Field(default="label_creator_place", description="Function to create the label field.")
     
 
