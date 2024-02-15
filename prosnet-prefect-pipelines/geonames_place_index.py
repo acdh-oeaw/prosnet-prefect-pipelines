@@ -29,7 +29,7 @@ def create_typesense_data(data: list) -> list:
     logger.info(f"Creating typesense data from {len(data)} rows.")
     return [
         {
-            "id": row["id"],
+            "id": f"https://sws.geonames.org/{row['id']}/",
             "label": f"{row['name']} ({row['country_code']}) - {row['feature_code']}",
             "name": row["asciiname"],
             "country": row["country_code"],
