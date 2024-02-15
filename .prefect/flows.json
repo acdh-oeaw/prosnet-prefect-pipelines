@@ -1,5 +1,6 @@
 {
   "create-typesense-index-from-sparql-query": "prosnet-prefect-pipelines/wikidata_index.py:create_typesense_index_from_sparql_query",
   "create-typesense-person-index-from-wikidata": "prosnet-prefect-pipelines/wikidata_person_index.py:create_typesense_person_index_from_wikidata",
+  "create-typesense-place-index-from-geonames": "prosnet-prefect-pipelines/geonames_place_index.py:create_typesense_place_index_from_geonames",
   "create-typesense-place-index-from-wikidata": "prosnet-prefect-pipelines/wikidata_place_index.py:create_typesense_place_index_from_wikidata"
 }

@@ -5,6 +5,7 @@ from prefect import flow, get_run_logger, task
 from pydantic import BaseModel, Field, HttpUrl
 import requests
 from push_to_typesense import push_data_to_typesense_flow, Params as PushParams
+from pydantic.dataclasses import dataclass
 
 
 @task()
@@ -22,7 +23,7 @@ def get_geonames_tsv_file(url: HttpUrl, column_names: list) -> dict:
             return [row for row in reader]
 
 
-@task()
+# @task()
 def create_typesense_data(data: list) -> list:
     """Create typesense data from the geonames data."""
     logger = get_run_logger()
@@ -40,17 +41,18 @@ def create_typesense_data(data: list) -> list:
     ]
 
 
-class Params(BaseModel):
+@dataclass
+class Params:
     tsv_location: HttpUrl = Field(
-        "https://download.geonames.org/export/dump/cities1000.zip",
+        default="https://download.geonames.org/export/dump/cities1000.zip",
         description="URL to the geonames tsv file.",
     )
     typesense_collection_name: str = Field(
-        "prosnet-geonames-place-index",
+        default="prosnet-geonames-place-index",
         description="Name of the typesense collection to use.",
     )
     typesense_definition: dict = Field(
-        {
+        default={
             "name": "prosnet-geonames-place-index",
             "fields": [
                 {"name": "id", "type": "string"},

@@ -100,3 +100,16 @@ deployments:
     timezone: UTC
     day_or: true
     active: true
+- name: default
+  version:
+  tags: []
+  description:
+  entrypoint: 
+    prosnet-prefect-pipelines/geonames_place_index.py:create_typesense_place_index_from_geonames
+  parameters: {}
+  work_pool:
+    name: intavia
+    work_queue_name:
+    job_variables: {}
+  schedule:
+  is_schedule_active: true
