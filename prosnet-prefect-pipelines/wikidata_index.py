@@ -55,11 +55,11 @@ def feature_code_postprocessing(feature_code):
     feture_codes_rank = [
         "PPLC",
         "PPLCH",
-        "PPL",
         "PPLA",
         "PPLA2",
         "PPLA3",
         "PPLA4",
+        "PPL",
         "PPLF",
         "PPLG",
         "PPLH",
