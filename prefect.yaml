@@ -113,3 +113,21 @@ deployments:
     job_variables: {}
   schedule:
   is_schedule_active: true
+- name: incremental_update
+  version:
+  tags: []
+  description:
+  entrypoint: 
+    prosnet-prefect-pipelines/wikidata_place_index.py:create_typesense_place_index_from_wikidata
+  parameters:
+    params:
+      limit: 200
+  work_pool:
+    name: intavia
+    work_queue_name:
+    job_variables: {}
+  schedule:
+    cron: '0 4 * * * '
+    timezone:
+    day_or: true
+    active: true
