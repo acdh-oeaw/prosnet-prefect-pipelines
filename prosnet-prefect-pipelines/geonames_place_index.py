@@ -5,7 +5,6 @@ from prefect import flow, get_run_logger, task
 from pydantic import BaseModel, Field, HttpUrl
 import requests
 from push_to_typesense import push_data_to_typesense_flow, Params as PushParams
-from pydantic.dataclasses import dataclass
 
 
 @task()
@@ -41,8 +40,7 @@ def create_typesense_data(data: list) -> list:
     ]
 
 
-@dataclass
-class Params:
+class Params(BaseModel):
     tsv_location: HttpUrl = Field(
         default="https://download.geonames.org/export/dump/cities1000.zip",
         description="URL to the geonames tsv file.",
