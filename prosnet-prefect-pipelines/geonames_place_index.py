@@ -30,7 +30,7 @@ def create_typesense_data(data: list) -> list:
     return [
         {
             "id": row["id"],
-            "label": row["name"],
+            "label": f"{row['name']} ({row['country_code']}) - {row['feature_code']}",
             "name": row["asciiname"],
             "country": row["country_code"],
             "feature_code": row["feature_code"],
