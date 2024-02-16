@@ -52,12 +52,14 @@ def label_creator_organization(data):
     label = data["name"]
     if "inception" in data:
         if data["inception"] is not None:
-            label += " (" + data["inception"]
+            if len(data["inception"]) > 4:
+                label += " (" + data["inception"]
     if "dissolvement" in data:
         if data["dissolvement"] is not None:
-            label += " - " + data["dissolvement"] + ")"
+            if len(data["dissolvement"]) > 4:
+                label += " - " + data["dissolvement"] + ")"
     if "(" in label and ")" not in label:
-        label += ")"
+        label += "-)"
     if "description" in data:
         if data["description"] is not None:
             label += ": " + data["description"]
