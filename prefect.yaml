@@ -42,43 +42,44 @@ deployments:
   is_schedule_active: true
 - name: prosnet_index_wikidata_persons
   version: 0.1
-  tags: 
-    - wikidata
-    - typesense
-    - prosnet
-    - persons
-  description: Create a Person index from Wikidata. Runs incremental updates every day at 2:00 UTC. Currently the index is limited to persons born in a 
-    predecessor of Austria.
+  tags:
+  - wikidata
+  - typesense
+  - prosnet
+  - persons
+  description: Create a Person index from Wikidata. Runs incremental updates every
+    day at 2:00 UTC. Currently the index is limited to persons born in a predecessor
+    of Austria.
   entrypoint: 
     prosnet-prefect-pipelines/wikidata_index.py:create_typesense_index_from_sparql_query
   parameters:
     params:
       limit: 200
-      typesense_definition: 
-        name: "prosnet-wikidata-person-index"
+      typesense_definition:
+        name: prosnet-wikidata-person-index
         fields:
-            - name: "id"
-              type: "string"
-            - name: "description"
-              type: "string"
-              optional: true
-            - name: "label"
-              type: "string"
-            - name: "name"
-              type: "string"
-              optional: true
-            - name: "date_of_birth"
-              type: "string"
-              optional: true
-            - name: "date_of_death"
-              type: "string"
-              optional: true
-            - name: "place_of_birth"
-              type: "string"
-              optional: true
-            - name: "place_of_death"
-              type: "string"
-              optional: true
+        - name: id
+          type: string
+        - name: description
+          type: string
+          optional: true
+        - name: label
+          type: string
+        - name: name
+          type: string
+          optional: true
+        - name: date_of_birth
+          type: string
+          optional: true
+        - name: date_of_death
+          type: string
+          optional: true
+        - name: place_of_birth
+          type: string
+          optional: true
+        - name: place_of_death
+          type: string
+          optional: true
       incremental_date: 2
       typesense_collection_name: prosnet-wikidata-person-index
       path_sparql_query: prosnet-prefect-pipelines/sparql/wikidata-person.sparql
@@ -100,14 +101,15 @@ deployments:
     day_or: true
     active: true
 - name: prosnet_index_geonames_places
-  version: 0.1
+  version: 0.1.1
   tags:
-    - geonames
-    - typesense
-    - prosnet
-    - places
-  description: Create a Place index from Geonames. Uses the download page of Geonames to get tsv data and create the index.
-    Currently places with more than 1000 inhabitants are indexed. Currently runs every Monday at 3:00 UTC.
+  - geonames
+  - typesense
+  - prosnet
+  - places
+  description: Create a Place index from Geonames. Uses the download page of Geonames
+    to get tsv data and create the index. Currently places with more than 1000 inhabitants
+    are indexed. Currently runs every Monday at 3:00 UTC.
   entrypoint: 
     prosnet-prefect-pipelines/geonames_place_index.py:create_typesense_place_index_from_geonames
   parameters:
@@ -122,17 +124,15 @@ deployments:
     name: intavia
     work_queue_name:
     job_variables: {}
-  schedule:
-  is_schedule_active: true
 - name: prosnet_index_wikidata_places
   version: 0.1
-  tags: 
-    - wikidata
-    - typesense
-    - prosnet
-    - places
-  description: Create a Place index from Wikidata. Runs incremental updates every day at 4:00 UTC. Currently the index is limited to places that are
-    cities or higher.
+  tags:
+  - wikidata
+  - typesense
+  - prosnet
+  - places
+  description: Create a Place index from Wikidata. Runs incremental updates every
+    day at 4:00 UTC. Currently the index is limited to places that are cities or higher.
   entrypoint: 
     prosnet-prefect-pipelines/wikidata_index.py:create_typesense_index_from_sparql_query
   parameters:
@@ -141,22 +141,22 @@ deployments:
       typesense_definition:
         name: prosnet-wikidata-place-index
         fields:
-          - name: id
-            type: string
-          - name: label
-            type: string
-          - name: name
-            type: string
-            optional: true
-          - name: country
-            type: string
-            optional: true
-          - name: feature_code
-            type: string
-            optional: true
-          - name: coordinates
-            type: geopoint
-            optional: true
+        - name: id
+          type: string
+        - name: label
+          type: string
+        - name: name
+          type: string
+          optional: true
+        - name: country
+          type: string
+          optional: true
+        - name: feature_code
+          type: string
+          optional: true
+        - name: coordinates
+          type: geopoint
+          optional: true
       incremental_date: 2
       typesense_collection_name: prosnet-wikidata-place-index
       path_sparql_query: prosnet-prefect-pipelines/sparql/wikidata-city.sparql
