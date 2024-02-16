@@ -178,7 +178,7 @@ deployments:
     day_or: true
     active: true
 - name: prosnet_index_wikidata_organizations
-  version: 0.1
+  version: 0.1.1
   tags:
   - wikidata
   - typesense
@@ -228,4 +228,4 @@ deployments:
     cron: 0 1 * * *
     timezone: UTC
     day_or: true
-    active: false
+    active: true
