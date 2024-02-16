@@ -87,7 +87,7 @@ deployments:
         itemLabel: name
         place_of_birthLabel: place_of_birth
         place_of_deathLabel: place_of_death
-      data_postprocessing_funtions:
+      data_postprocessing_functions:
         date_of_birth: date_postprocessing
         date_of_death: date_postprocessing
       label_creator_function: label_creator_person
@@ -164,7 +164,7 @@ deployments:
         itemLabel: name
         countryLabel: country
         coord: coordinates
-      data_postprocessing_funtions:
+      data_postprocessing_functions:
         coordinates: geopoint_creator
         feature_code: feature_code_postprocessing
       label_creator_function: label_creator_place
@@ -216,7 +216,7 @@ deployments:
       path_sparql_query: prosnet-prefect-pipelines/sparql/wikidata-organization.sparql
       field_mapping:
         organizationLabel: name
-      data_postprocessing_funtions:
+      data_postprocessing_functions:
         inception: cocatenated_dates_postprocessing
         dissolvement: cocatenated_dates_postprocessing
       label_creator_function: label_creator_organization
