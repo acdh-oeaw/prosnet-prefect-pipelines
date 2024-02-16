@@ -13,6 +13,8 @@ from prefect.artifacts import create_markdown_artifact
 
 
 def date_postprocessing(x):
+    if x.startswith("http"):
+        return None
     return x.split("T")[0]
 
 
