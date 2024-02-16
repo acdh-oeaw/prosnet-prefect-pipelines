@@ -1,0 +1,24 @@
+SELECT (?organization as ?id) ?organizationLabel ?description (group_concat(distinct ?inception_pre) as ?inception) (group_concat(distinct ?dissolvement_pre) as ?dissolvement) WHERE {
+  {SELECT DISTINCT ?organization WHERE {
+    VALUES ?location { wd:Q28513 wd:Q131964 wd:Q699964 } 
+      ?organization wdt:P31/wdt:P279* wd:Q43229; # Instance of (or subclass of) organization
+                wdt:P17 ?location.
+              #REMOVE_INCREMENTAL ?item schema:dateModified ?date_modified .
+              #REMOVE_INCREMENTAL FILTER(?date_modified > "{{INCREMENTAL_DATE}}"^^xsd:dateTime)
+    }
+  
+          LIMIT $limit
+          OFFSET $offset
+  }
+  OPTIONAL{?organization wdt:P571 ?inception_pre}
+  OPTIONAL{?organization wdt:P576 ?dissolvement_pre}
+  OPTIONAL{?organization schema:description ?descriptionDE .
+           FILTER (LANG(?descriptionDE) = "de")
+          }
+  OPTIONAL{?organization schema:description ?descriptionEN .
+           FILTER (LANG(?descriptionEN) = "en")
+          }
+  BIND(COALESCE(?descriptionDE, ?descriptionEN) as ?description)
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "de,en". }
+}
+GROUP BY ?organization ?organizationLabel ?description
