@@ -178,7 +178,7 @@ deployments:
     day_or: true
     active: true
 - name: prosnet_index_wikidata_organizations
-  version: 0.1.1
+  version: 0.1.2
   tags:
   - wikidata
   - typesense

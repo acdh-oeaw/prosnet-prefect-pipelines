@@ -57,7 +57,8 @@ def label_creator_organization(data):
     if "dissolvement" in data:
         if data["dissolvement"] is not None:
             if len(data["dissolvement"]) > 4:
-                label += " - " if "(" in label else "( - " + data["dissolvement"] + ")"
+                label += " - " if "(" in label else "( - "
+                label += data["dissolvement"] + ")"
     if "(" in label and ")" not in label:
         label += "-)"
     if "description" in data:
