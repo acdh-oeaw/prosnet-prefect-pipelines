@@ -264,10 +264,7 @@ class Params(BaseModel):
         description="List of tuples to map SPARQL fields to typesense fieldnames.",
     )
     data_postprocessing_functions: dict | None = Field(
-        default={
-            "date_of_birth": "date_postprocessing",
-            "date_of_death": "date_postprocessing",
-        },
+        default=None,
         description="Dict of functions to apply to values before pushing them to typesense.",
     )
     label_creator_function: str = Field(
