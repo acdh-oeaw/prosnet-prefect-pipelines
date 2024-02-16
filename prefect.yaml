@@ -191,7 +191,7 @@ deployments:
     prosnet-prefect-pipelines/wikidata_index.py:create_typesense_index_from_sparql_query
   parameters:
     params:
-      limit: 200
+      limit: 100
       typesense_definition:
         name: prosnet-wikidata-organization-index
         fields:
