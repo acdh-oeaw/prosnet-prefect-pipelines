@@ -27,18 +27,6 @@ pull:
 
 # the deployments section allows you to provide configuration for deploying flows
 deployments:
-- name:
-  version:
-  tags: []
-  description:
-  schedule: {}
-  flow_name:
-  entrypoint:
-  parameters: {}
-  work_pool:
-    name:
-    work_queue_name:
-    job_variables: {}
 - name: default
   version:
   tags: []
@@ -52,82 +40,140 @@ deployments:
     job_variables: {}
   schedule:
   is_schedule_active: true
-- name: prosnet_index_persons
-  version:
-  tags: []
-  description: Create a typesense index from a SPARQL data.
+- name: prosnet_index_wikidata_persons
+  version: 0.1
+  tags: 
+    - wikidata
+    - typesense
+    - prosnet
+    - persons
+  description: Create a Person index from Wikidata. Runs incremental updates every day at 2:00 UTC. Currently the index is limited to persons born in a 
+    predecessor of Austria.
   entrypoint: 
     prosnet-prefect-pipelines/wikidata_index.py:create_typesense_index_from_sparql_query
-  parameters: {}
-  work_pool:
-    name: intavia
-    work_queue_name:
-    job_variables: {}
-  schedule:
-    cron: 0 5 * * *
-    timezone: UTC
-    day_or: true
-    active: true
-- name: default
-  version:
-  tags: []
-  description:
-  entrypoint: 
-    prosnet-prefect-pipelines/wikidata_place_index.py:create_typesense_place_index_from_wikidata
-  parameters: {}
-  work_pool:
-    name: intavia
-    work_queue_name:
-    job_variables: {}
-  schedule:
-    cron: 0 4 * * *
-    timezone: UTC
-    day_or: true
-    active: true
-- name: default
-  version:
-  tags: []
-  description:
-  entrypoint: 
-    prosnet-prefect-pipelines/wikidata_person_index.py:create_typesense_person_index_from_wikidata
-  parameters: {}
-  work_pool:
-    name: intavia
-    work_queue_name:
-    job_variables: {}
-  schedule:
-    cron: 0 4 * * *
-    timezone: UTC
-    day_or: true
-    active: true
-- name: default
-  version:
-  tags: []
-  description:
-  entrypoint: 
-    prosnet-prefect-pipelines/geonames_place_index.py:create_typesense_place_index_from_geonames
-  parameters: {}
-  work_pool:
-    name: intavia
-    work_queue_name:
-    job_variables: {}
-  schedule:
-  is_schedule_active: true
-- name: incremental_update
-  version:
-  tags: []
-  description:
-  entrypoint: 
-    prosnet-prefect-pipelines/wikidata_place_index.py:create_typesense_place_index_from_wikidata
   parameters:
     params:
       limit: 200
+      typesense_definition: 
+        name: "prosnet-wikidata-person-index"
+        fields:
+            - name: "id"
+              type: "string"
+            - name: "description"
+              type: "string"
+              optional: true
+            - name: "label"
+              type: "string"
+            - name: "name"
+              type: "string"
+              optional: true
+            - name: "date_of_birth"
+              type: "string"
+              optional: true
+            - name: "date_of_death"
+              type: "string"
+              optional: true
+            - name: "place_of_birth"
+              type: "string"
+              optional: true
+            - name: "place_of_death"
+              type: "string"
+              optional: true
+      incremental_date: 2
+      typesense_collection_name: prosnet-wikidata-person-index
+      path_sparql_query: prosnet-prefect-pipelines/sparql/wikidata-person.sparql
+      field_mapping:
+        itemLabel: name
+        place_of_birthLabel: place_of_birth
+        place_of_deathLabel: place_of_death
+      data_postprocessing_funtions:
+        date_of_birth: date_postprocessing
+        date_of_death: date_postprocessing
+      label_creator_function: label_creator_person
   work_pool:
     name: intavia
     work_queue_name:
     job_variables: {}
   schedule:
-    cron: '0 4 * * * '
-    timezone:
+    cron: 0 2 * * *
+    timezone: UTC
+    day_or: true
+    active: true
+- name: prosnet_index_geonames_places
+  version: 0.1
+  tags:
+    - geonames
+    - typesense
+    - prosnet
+    - places
+  description: Create a Place index from Geonames. Uses the download page of Geonames to get tsv data and create the index.
+    Currently places with more than 1000 inhabitants are indexed. Currently runs every Monday at 3:00 UTC.
+  entrypoint: 
+    prosnet-prefect-pipelines/geonames_place_index.py:create_typesense_place_index_from_geonames
+  parameters:
+    params:
+      tsv_location: https://download.geonames.org/export/dump/cities1000.zip
+  schedule:
+    cron: 0 3 * * 1
+    timezone: UTC
+    day_or: true
+    active: true
+  work_pool:
+    name: intavia
+    work_queue_name:
+    job_variables: {}
+  schedule:
+  is_schedule_active: true
+- name: prosnet_index_wikidata_places
+  version: 0.1
+  tags: 
+    - wikidata
+    - typesense
+    - prosnet
+    - places
+  description: Create a Place index from Wikidata. Runs incremental updates every day at 4:00 UTC. Currently the index is limited to places that are
+    cities or higher.
+  entrypoint: 
+    prosnet-prefect-pipelines/wikidata_index.py:create_typesense_index_from_sparql_query
+  parameters:
+    params:
+      limit: 200
+      typesense_definition:
+        name: prosnet-wikidata-place-index
+        fields:
+          - name: id
+            type: string
+          - name: label
+            type: string
+          - name: name
+            type: string
+            optional: true
+          - name: country
+            type: string
+            optional: true
+          - name: feature_code
+            type: string
+            optional: true
+          - name: coordinates
+            type: geopoint
+            optional: true
+      incremental_date: 2
+      typesense_collection_name: prosnet-wikidata-place-index
+      path_sparql_query: prosnet-prefect-pipelines/sparql/wikidata-city.sparql
+      field_mapping:
+        itemLabel: name
+        countryLabel: country
+        coord: coordinates
+      data_postprocessing_funtions:
+        coordinates: geopoint_creator
+        feature_code: feature_code_postprocessing
+      label_creator_function: label_creator_place
+  work_pool:
+    name: intavia
+    work_queue_name:
+    job_variables: {}
+  schedule:
+    cron: 0 4 * * *
+    timezone: UTC
     day_or: true
     active: true

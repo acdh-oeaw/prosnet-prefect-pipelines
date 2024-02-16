@@ -42,7 +42,7 @@ def create_typesense_data(data: list) -> list:
 
 class Params(BaseModel):
     tsv_location: HttpUrl = Field(
-        default="https://download.geonames.org/export/dump/cities1000.zip",
+        ...,
         description="URL to the geonames tsv file.",
     )
     typesense_collection_name: str = Field(
