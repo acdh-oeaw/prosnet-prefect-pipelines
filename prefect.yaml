@@ -177,3 +177,55 @@ deployments:
     timezone: UTC
     day_or: true
     active: true
+- name: prosnet_index_wikidata_organizations
+  version: 0.1
+  tags:
+  - wikidata
+  - typesense
+  - prosnet
+  - organizations
+  description: Create a Organization index from Wikidata. Runs incremental updates every
+    day at 1:00 UTC. Currently the index is limited to organizations located in a predecessor
+    of Austria.
+  entrypoint: 
+    prosnet-prefect-pipelines/wikidata_index.py:create_typesense_index_from_sparql_query
+  parameters:
+    params:
+      limit: 200
+      typesense_definition:
+        name: prosnet-wikidata-organization-index
+        fields:
+        - name: id
+          type: string
+        - name: description
+          type: string
+          optional: true
+        - name: label
+          type: string
+        - name: name
+          type: string
+          optional: true
+        - name: inception
+          type: string
+          optional: true
+        - name: dissolvement
+          type: string
+          optional: true
+      incremental_date: 2
+      typesense_collection_name: prosnet-wikidata-organization-index
+      path_sparql_query: prosnet-prefect-pipelines/sparql/wikidata-organization.sparql
+      field_mapping:
+        organizationLabel: name
+      data_postprocessing_funtions:
+        inception: cocatenated_dates_postprocessing
+        dissolvement: cocatenated_dates_postprocessing
+      label_creator_function: label_creator_organization
+  work_pool:
+    name: intavia
+    work_queue_name:
+    job_variables: {}
+  schedule:
+    cron: 0 1 * * *
+    timezone: UTC
+    day_or: true
+    active: false

@@ -16,6 +16,10 @@ def date_postprocessing(x):
     return x.split("T")[0]
 
 
+def cocatenated_dates_postprocessing(x):
+    return " / ".join([date_postprocessing(y) for y in x.split()])
+
+
 def label_creator_person(data):
     label = data["name"]
     if "date_of_birth" in data or "date_of_death" in data:
@@ -41,6 +45,22 @@ def label_creator_place(data):
     if "feature_code" in data:
         if data["feature_code"] is not None:
             label += " - " + data["feature_code"]
+    return label
+
+
+def label_creator_organization(data):
+    label = data["name"]
+    if "inception" in data:
+        if data["inception"] is not None:
+            label += " (" + data["inception"]
+    if "dissolvement" in data:
+        if data["dissolvement"] is not None:
+            label += " - " + data["dissolvement"] + ")"
+    if "(" in label and ")" not in label:
+        label += ")"
+    if "description" in data:
+        if data["description"] is not None:
+            label += ": " + data["description"]
     return label
 
 
