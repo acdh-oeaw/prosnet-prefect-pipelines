@@ -1,8 +1,22 @@
 SELECT (?organization as ?id) ?organizationLabel ?description (group_concat(distinct ?inception_pre) as ?inception) (group_concat(distinct ?dissolvement_pre) as ?dissolvement) WHERE {
   {SELECT DISTINCT ?organization WHERE {
-    VALUES ?location { wd:Q28513 wd:Q131964 wd:Q699964 } 
-      ?organization wdt:P31/wdt:P279* wd:Q43229; # Instance of (or subclass of) organization
-                wdt:P17 ?location.
+   {?organization wdt:P31 wd:Q43229 #organization
+   } UNION {
+    ?organization wdt:P31/wdt:P279* wd:Q3918 #university
+    } UNION {
+  ?organization wdt:P31 wd:Q4830453 #company
+  } UNION {
+  ?organization wdt:P31/wdt:P279* wd:Q18810687 #political institution
+  } UNION {
+  ?organization wdt:P31/wdt:P279* wd:Q11775750 #public ministry
+  } UNION {
+  ?organization wdt:P31/wdt:P279* wd:Q33506 #museum
+} UNION {
+  ?organization wdt:P31/wdt:P279* wd:Q1797187 #cultural institution
+}
+                    
+                    VALUES ?location { wd:Q28513 wd:Q131964 wd:Q699964 wd:Q40} 
+               ?organization wdt:P17 ?location. 
               #REMOVE_INCREMENTAL ?item schema:dateModified ?date_modified .
               #REMOVE_INCREMENTAL FILTER(?date_modified > "{{INCREMENTAL_DATE}}"^^xsd:dateTime)
     }
