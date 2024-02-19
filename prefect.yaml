@@ -41,7 +41,7 @@ deployments:
   schedule:
   is_schedule_active: true
 - name: prosnet_index_wikidata_persons
-  version: 0.1
+  version: 0.1.1
   tags:
   - wikidata
   - typesense
@@ -125,7 +125,7 @@ deployments:
     work_queue_name:
     job_variables: {}
 - name: prosnet_index_wikidata_places
-  version: 0.1
+  version: 0.1.1
   tags:
   - wikidata
   - typesense
@@ -178,7 +178,7 @@ deployments:
     day_or: true
     active: true
 - name: prosnet_index_wikidata_organizations
-  version: 0.1.4
+  version: 0.1.6
   tags:
   - wikidata
   - typesense

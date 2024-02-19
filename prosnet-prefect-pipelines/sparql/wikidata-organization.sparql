@@ -17,7 +17,7 @@ SELECT (?organization as ?id) ?organizationLabel ?description (group_concat(dist
                     
                     VALUES ?location { wd:Q28513 wd:Q131964 wd:Q699964 wd:Q40} 
                ?organization wdt:P17 ?location. 
-              #REMOVE_INCREMENTAL ?item schema:dateModified ?date_modified .
+              #REMOVE_INCREMENTAL ?organization schema:dateModified ?date_modified .
               #REMOVE_INCREMENTAL FILTER(?date_modified > "{{INCREMENTAL_DATE}}"^^xsd:dateTime)
     }
   
