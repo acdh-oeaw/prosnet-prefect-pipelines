@@ -13,7 +13,7 @@ packages = [
 python = "^3.11"
 typesense = "^0.19.0"
 sparqlwrapper = "^2.0.0"
-prefect = {git = "https://github.com/acdh-oeaw/prefect.git", branch = "v2.14.15"}
+prefect = {git = "https://github.com/acdh-oeaw/prefect.git", branch = "v2.20.3"}
 
 
 [build-system]
