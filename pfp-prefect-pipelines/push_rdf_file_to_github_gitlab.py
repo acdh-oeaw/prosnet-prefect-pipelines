@@ -3,9 +3,11 @@ import os
 import shutil
 import requests
 import git
-from pydantic import BaseModel, DirectoryPath, Field, FilePath, HttpUrl
+from typing import Literal
+from pydantic import BaseModel, Field, FilePath, HttpUrl
 from prefect import flow, get_run_logger, task
 from prefect.blocks.system import Secret
+import urllib
 
 
 @task(tags=["github"])
@@ -25,7 +27,7 @@ def create_mr_gitlab(title, branch, token, repo, base):
     headers = {
         "PRIVATE-TOKEN": token,
     }
-    url = f"https://gitlab.oeaw.ac.at/api/v4/projects/{repo}/merge_requests"
+    url = f"https://gitlab.oeaw.ac.at/api/v4/projects/{urllib.parse.quote_plus(repo)}/merge_requests"
     form = {"title": title, "source_branch": branch, "target_branch": base}
     res = requests.post(url, headers=headers, json=form)
     return res
@@ -127,9 +129,9 @@ def push_data_to_repo_flow(params: Params):
     username = Secret.load(params.username_secret).get()
     password = Secret.load(params.password_secret).get()
     if params.git_provider == "github":
-        remote = f"https://{username}:{password}@github.com/{repo}.git"
+        remote = f"https://{username}:{password}@github.com/{params.repo}.git"
     elif params.git_provider == "oeaw-gitlab":
-        remote = f"https://{username}:{password}@gitlab.oeaw.ac.at/{repo}.git"
+        remote = f"https://{username}:{password}@gitlab.oeaw.ac.at/{params.repo}.git"
     commit_message = f"feat: {params.commit_message}"
     if params.branch_name_add_date:
         branch_name = (
@@ -147,8 +149,9 @@ def push_data_to_repo_flow(params: Params):
         params.file_path_git,
         params.local_folder,
         params.force,
+        remote,
     )
-    if res and params.auto_pr params.git_provider == "github":
+    if res and params.auto_pr and params.git_provider == "github":
         create_pr_github(
             f"add new data from {branch_name}",
             branch_name,
@@ -156,7 +159,7 @@ def push_data_to_repo_flow(params: Params):
             params.repo,
             params.base_branch_pr,
         )
-    elif res and params.auto_pr params.git_provider == "oeaw-gitlab":
+    elif res and params.auto_pr and params.git_provider == "oeaw-gitlab":
         create_mr_gitlab(
             f"add new data from {branch_name}",
             branch_name,
@@ -165,5 +168,15 @@ def push_data_to_repo_flow(params: Params):
             params.base_branch_pr,
         )
 
+
 if __name__ == "__main__":
-    push_data_to_repo_flow(Params())
+    push_data_to_repo_flow(
+        Params(
+            repo="acdh-ch/pfp/pfp-source-data",
+            username_secret="gitlab-source-data-username",
+            password_secret="gitlab-source-data-password",
+            file_path="../testdata/apis_data.ttl",
+            git_provider="oeaw-gitlab",
+            branch_name="testbranch_3",
+        )
+    )
