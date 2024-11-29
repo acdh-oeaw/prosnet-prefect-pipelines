@@ -184,9 +184,9 @@ deployments:
   - typesense
   - prosnet
   - organizations
-  description: Create a Organization index from Wikidata. Runs incremental updates every
-    day at 1:00 UTC. Currently the index is limited to organizations located in a predecessor
-    of Austria.
+  description: Create a Organization index from Wikidata. Runs incremental updates
+    every day at 1:00 UTC. Currently the index is limited to organizations located
+    in a predecessor of Austria.
   entrypoint: 
     prosnet-prefect-pipelines/wikidata_index.py:create_typesense_index_from_sparql_query
   parameters:
@@ -229,3 +229,14 @@ deployments:
     timezone: UTC
     day_or: true
     active: true
+- name: push-to-pfp-source-data-repo
+  version:
+  tags: []
+  description:
+  entrypoint: pfp-prefect-pipelines/push_rdf_file_to_github_gitlab.py:push_data_to_repo_flow
+  parameters: {}
+  work_pool:
+    name: intavia
+    work_queue_name:
+    job_variables: {}
+  schedules: []
