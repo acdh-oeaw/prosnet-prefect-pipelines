@@ -17,7 +17,8 @@ pull:
 - prefect.deployments.steps.run_shell_script:
     id: install-git-lfs
     script: |
-      apt-get update && apt-get install -y git-lfs
+      apt-get update
+      apt-get install -y git-lfs
       git lfs install
 - prefect.deployments.steps.git_clone:
     id: clone-step
