@@ -63,7 +63,6 @@ def serialize_to_nquads(graph: Graph, output_path: str):
 
 
 class Params(BaseModel):
-    name: str = Field(..., description="Name of the apis instance.")
     accept_header: str = Field(
         "text/ttl", description="Value to use for the accept header."
     )
@@ -114,7 +113,6 @@ def get_data_from_apis_instance(params: Params):
 if __name__ == "__main__":
     result = get_data_from_apis_instance(
         Params(
-            name="testapis",
             max_objects=500,
             api_url="http://localhost:8000/apis/api/apis_ontology.",
             routes=["person", "graduiertean"],

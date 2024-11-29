@@ -97,10 +97,6 @@ class Params(BaseModel):
         "datasets/apis_data.ttl",
         description="Path of the file to use within the Git repo",
     )
-    named_graphs_used: list[HttpUrl] = Field(
-        None,
-        description="Named graphs used in the generation of the data",
-    )
     commit_message: str = Field(
         "Updates data to latest",
         alias="Commit Message",
@@ -120,7 +116,7 @@ class Params(BaseModel):
     )
     git_provider: Literal["oeaw-gitlab", "github"] = Field(
         "oeaw-gitlab",
-        decription="The git-provider to use. Options are OEAW-GitLab and GitHub.",
+        description="The git-provider to use. Options are OEAW-GitLab and GitHub.",
     )
 
 
