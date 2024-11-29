@@ -92,7 +92,7 @@ class Params(BaseModel):
         "github-password",
         description="Name of the prefect secret that contains the password. Use tokens instead of your personal password.",
     )
-    file_path: FilePath = Field(..., description="Path of the file to ingest")
+    file_path: str = Field(..., description="Path of the file to ingest")
     file_path_git: str = Field(
         "datasets/apis_data.ttl",
         description="Path of the file to use within the Git repo",

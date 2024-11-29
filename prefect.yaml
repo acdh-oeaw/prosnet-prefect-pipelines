@@ -240,3 +240,15 @@ deployments:
     work_queue_name:
     job_variables: {}
   schedules: []
+- name: default
+  version:
+  tags: []
+  description: Flow that fetches data from APIs and pushes it to a GitLab repository.
+  entrypoint: 
+    pfp-prefect-pipelines/get_apis_data_and_push_to_repo.py:get_apis_data_and_push_to_gitlab
+  parameters: {}
+  work_pool:
+    name: intavia
+    work_queue_name:
+    job_variables: {}
+  schedules: []
