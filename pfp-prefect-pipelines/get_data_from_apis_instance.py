@@ -1,10 +1,9 @@
 from prefect import flow, get_run_logger, task
 from prefect.blocks.system import Secret
-from pydantic import BaseModel, Field, FilePath, HttpUrl
+from pydantic import BaseModel, Field, HttpUrl
 import requests
-from rdflib import Graph, URIRef, ConjunctiveGraph
+from rdflib import Graph, URIRef, Dataset
 from typing import Iterator
-import tempfile
 
 
 @task
@@ -36,20 +35,14 @@ def get_data_from_route(
 
 
 @task
-def combine_ttl_data(ttl_chunks: list[str], named_graph_uri: str) -> ConjunctiveGraph:
+def combine_ttl_data(ttl_chunks: list[str], named_graph_uri: str) -> Dataset:
     """Combine TTL chunks into a single named graph."""
     logger = get_run_logger()
-    combined_graph = ConjunctiveGraph()
+    combined_graph = Dataset()
     context = URIRef(named_graph_uri)
-
+    g = combined_graph.graph(context)
     for chunk in ttl_chunks:
-        temp_graph = Graph(combined_graph.store, context)
-        temp_graph.parse(data=chunk, format="turtle")
-
-        # Add triples to the named graph in the conjunctive graph
-        for s, p, o in temp_graph:
-            combined_graph.add((s, p, o))
-
+        g.parse(data=chunk, format="turtle")
     logger.info(f"Combined {len(combined_graph)} quads into named graph")
     return combined_graph
 
