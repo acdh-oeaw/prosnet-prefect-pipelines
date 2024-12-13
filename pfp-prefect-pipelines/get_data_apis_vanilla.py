@@ -984,7 +984,7 @@ def create_base_graph(base_uri, named_graph):
     edm = Namespace("http://www.europeana.eu/schemas/edm/")
     """Defines namespace for Europeana data model vocabulary."""
     global owl
-    owl = Namespace("http://www.w3.org/2002/7/owl#")
+    owl = Namespace("http://www.w3.org/2002/07/owl#")
     """Defines namespace for Europeana data model vocabulary."""
     global rdf
     rdf = Namespace("http://www.w3.org/1999/02/22-rdf-syntax-ns#")
@@ -1059,12 +1059,12 @@ def serialize_graph(g, storage_path, add_date_to_file):
         g.add((o, bioc.bearer_of, s))
     Path(storage_path).mkdir(parents=True, exist_ok=True)
     if add_date_to_file:
-        storage_path += f"_{datetime.now().strftime('%d-%m-%Y')}"
-    storage_path += ".nq"
-    g.serialize(
-        destination=storage_path,
-        format="nquads",
-    )
+        new_name = f"{storage_path.stem}_{datetime.now().strftime('%d-%m-%Y')}.nq"
+        storage_path = storage_path.with_name(new_name)
+    else:
+        # Just add the extension
+        storage_path = storage_path.with_suffix(".ttl")
+    g.serialize(destination=storage_path, format="ttl")
     return storage_path
 
 
@@ -1122,88 +1122,120 @@ def gather_render_tasks(data, render_task, **kwargs):
     return res
 
 
+@task
+def fetch_person_relations(person_ids, relation_type, filter_key):
+    """Fetch person relations in batches to reduce parallel jobs"""
+    batch_size = 50  # Process 50 persons at a time
+    results = []
+
+    for i in range(0, len(person_ids), batch_size):
+        batch_ids = person_ids[i : i + batch_size]
+        batch_results = request_from_api(
+            mapped_id=batch_ids,
+            mapped_filter_key=filter_key,
+            api_endpoint="relations",
+            entity_type=relation_type,
+            return_results_only=True,
+        )
+        results.extend(batch_results)
+
+    return results
+
+
 @flow
 def create_apis_rdf_serialization_v3(params: Params):
     logger = get_run_logger()
     create_base_graph(params.base_uri_serialization, params.named_graph)
     global base_uri
     base_uri = params.endpoint
+
+    # Step 1: Get initial person list
+    logger.info("Fetching initial person list")
     pers_counts = request_from_api(
         filter_params=params.filter_params,
         return_count_only=True,
         entity_type="person",
     )
-    pers_list_initial = request_from_api.map(
-        offset=range(0, pers_counts, params.page_size),
-        filter_params=unmapped(params.filter_params),
-        return_results_only=True,
-        entity_type="person",
-    )
-    pre_list_ids = [res.result() for res in pers_list_initial]
-    pers_list_initial_ids = list(
-        set([item["id"] for sublist in pre_list_ids for item in sublist])
-    )
-    pers_list_initial_render = gather_render_tasks(pers_list_initial, render_person)
-    pers_place_relations = request_from_api.map(
-        mapped_id=pers_list_initial_ids,
-        mapped_filter_key="related_person",
-        api_endpoint="relations",
-        entity_type="personplace",
-        return_results_only=True,
-    )
-    pers_inst_relations = request_from_api.map(
-        mapped_id=pers_list_initial_ids,
-        mapped_filter_key="related_person",
-        api_endpoint="relations",
-        entity_type="personinstitution",
-        return_results_only=True,
-    )
-    pers_pers_relationsA = request_from_api.map(
-        mapped_id=pers_list_initial_ids,
-        mapped_filter_key="related_personA",
-        api_endpoint="relations",
-        entity_type="personperson",
-        return_results_only=True,
-    )
-    pers_pers_relationsB = request_from_api.map(
-        mapped_id=pers_list_initial_ids,
-        mapped_filter_key="related_personB",
-        api_endpoint="relations",
-        entity_type="personperson",
-        return_results_only=True,
+
+    # Fetch persons in smaller batches
+    batch_size = min(500, pers_counts)  # Limit batch size
+    pers_list_initial = []
+    for offset in range(0, pers_counts, batch_size):
+        batch = request_from_api(
+            offset=offset,
+            filter_params=params.filter_params,
+            return_results_only=True,
+            entity_type="person",
+        )
+        pers_list_initial.extend(batch)
+
+    pers_list_initial_ids = list(set([item["id"] for item in pers_list_initial]))
+
+    # Step 2: Render initial person list
+    logger.info("Rendering person data")
+    pers_list_initial_render = gather_render_tasks([pers_list_initial], render_person)
+
+    # Step 3: Fetch and render relations in sequence
+    logger.info("Processing person-place relations")
+    pers_place_relations = fetch_person_relations(
+        pers_list_initial_ids, "personplace", "related_person"
     )
     pers_place_relations_render = gather_render_tasks(
-        pers_place_relations, render_personplace_relation
+        [pers_place_relations], render_personplace_relation
+    )
+
+    logger.info("Processing person-institution relations")
+    pers_inst_relations = fetch_person_relations(
+        pers_list_initial_ids, "personinstitution", "related_person"
     )
     pers_inst_relations_render = gather_render_tasks(
-        pers_inst_relations, render_personinstitution_relation
-    )
-    pers_pers_relations_render = gather_render_tasks(
-        pers_pers_relationsA, render_personperson_relation
-    )
-    pers_pers_relations_renderB = gather_render_tasks(
-        pers_pers_relationsB, render_personperson_relation
+        [pers_inst_relations], render_personinstitution_relation
     )
     pers_inst_relations_vocab_render = gather_render_tasks(
-        pers_inst_relations, render_personrole_from_relation
+        [pers_inst_relations], render_personrole_from_relation
     )
-    additional_places = request_from_api.map(
-        mapped_id=glob_list_entities["place"],
-        mapped_filter_key="id",
-        entity_type="place",
-        return_results_only=True,
+
+    logger.info("Processing person-person relations")
+    pers_pers_relationsA = fetch_person_relations(
+        pers_list_initial_ids, "personperson", "related_personA"
     )
-    additional_places_render = gather_render_tasks(additional_places, render_place)
-    additional_institutions = request_from_api.map(
-        mapped_id=glob_list_entities["institution"],
-        mapped_filter_key="id",
-        entity_type="institution",
-        return_results_only=True,
+    pers_pers_relationsB = fetch_person_relations(
+        pers_list_initial_ids, "personperson", "related_personB"
     )
-    additional_institutions_render = gather_render_tasks(
-        additional_institutions, render_organization
+    pers_pers_relations_render = gather_render_tasks(
+        [pers_pers_relationsA], render_personperson_relation
     )
-    file_path = serialize_graph.submit(
+    pers_pers_relations_renderB = gather_render_tasks(
+        [pers_pers_relationsB], render_personperson_relation
+    )
+
+    # Step 4: Process additional entities
+    logger.info("Processing additional places and institutions")
+    if glob_list_entities["place"]:
+        additional_places = request_from_api(
+            mapped_id=glob_list_entities["place"],
+            mapped_filter_key="id",
+            entity_type="place",
+            return_results_only=True,
+        )
+        additional_places_render = gather_render_tasks(
+            [additional_places], render_place
+        )
+
+    if glob_list_entities["institution"]:
+        additional_institutions = request_from_api(
+            mapped_id=glob_list_entities["institution"],
+            mapped_filter_key="id",
+            entity_type="institution",
+            return_results_only=True,
+        )
+        additional_institutions_render = gather_render_tasks(
+            [additional_institutions], render_organization
+        )
+
+    # Step 5: Serialize the graph
+    logger.info("Serializing graph")
+    file_path = serialize_graph(
         g,
         params.storage_path,
         params.add_date_to_file,
