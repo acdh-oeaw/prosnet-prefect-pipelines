@@ -1,4 +1,5 @@
 from collections import ChainMap
+from prefect.blocks.system import Secret
 import enum
 from itertools import chain
 import os
@@ -919,12 +920,17 @@ def request_from_api(
     mapped_filter_key: str | None = None,
     return_results_only: bool = False,
     return_count_only: bool = False,
+    secret_token: str = None,
 ):
     rate_limit("api-requests-apis")
     logger = get_run_logger()
+    headers = {}
+    if secret_token is not None:
+        headers["Authorization"] = secret_token
+        logger.info(f"using secret_token {secret_token}")
     if url is not None:
         logger.info(f"Getting entities from {url}")
-        res = requests.get(url)
+        res = requests.get(url, headers=headers)
     else:
         url = f"{base_url}/apis/api/{api_endpoint}/{entity_type}"
         logger.info(f"Getting entities from {url}")
@@ -936,7 +942,7 @@ def request_from_api(
             filter_params["format"] = "json"
         if mapped_filter_key is not None:
             filter_params[mapped_filter_key] = mapped_id
-        res = requests.get(url, params=filter_params)
+        res = requests.get(url, params=filter_params, headers=headers)
     if res.status_code == 200:
         if return_count_only:
             return res.json()["count"]
@@ -1110,6 +1116,9 @@ class Params(BaseModel):
     page_size: int = Field(
         100, description="Page size used for requests against the API"
     )
+    secret_token: str | None = Field(
+        None, description="Secret to use for Token if needed."
+    )
 
 
 @flow
@@ -1123,11 +1132,14 @@ def gather_render_tasks(data, render_task, **kwargs):
 
 
 @task
-def fetch_person_relations(person_ids, relation_type, filter_key):
+def fetch_person_relations(
+    person_ids, relation_type, filter_key, secret_token, endpoint
+):
     """Fetch person relations in batches to reduce parallel jobs"""
     batch_size = 50  # Process 50 persons at a time
+    logger = get_run_logger()
+    logger.info(f"secret token relations {secret_token}")
     results = []
-
     for i in range(0, len(person_ids), batch_size):
         batch_ids = person_ids[i : i + batch_size]
         batch_results = request_from_api(
@@ -1136,6 +1148,8 @@ def fetch_person_relations(person_ids, relation_type, filter_key):
             api_endpoint="relations",
             entity_type=relation_type,
             return_results_only=True,
+            secret_token=secret_token,
+            base_url=endpoint,
         )
         results.extend(batch_results)
 
@@ -1148,6 +1162,9 @@ def create_apis_rdf_serialization_v3(params: Params):
     create_base_graph(params.base_uri_serialization, params.named_graph)
     global base_uri
     base_uri = params.endpoint
+    secret_token = None
+    if params.secret_token is not None:
+        secret_token = f"Token {Secret.load(params.secret_token).get()}"
 
     # Step 1: Get initial person list
     logger.info("Fetching initial person list")
@@ -1155,6 +1172,8 @@ def create_apis_rdf_serialization_v3(params: Params):
         filter_params=params.filter_params,
         return_count_only=True,
         entity_type="person",
+        base_url=params.endpoint,
+        secret_token=secret_token,
     )
 
     # Fetch persons in smaller batches
@@ -1166,6 +1185,8 @@ def create_apis_rdf_serialization_v3(params: Params):
             filter_params=params.filter_params,
             return_results_only=True,
             entity_type="person",
+            base_url=params.endpoint,
+            secret_token=secret_token,
         )
         pers_list_initial.extend(batch)
 
@@ -1178,7 +1199,11 @@ def create_apis_rdf_serialization_v3(params: Params):
     # Step 3: Fetch and render relations in sequence
     logger.info("Processing person-place relations")
     pers_place_relations = fetch_person_relations(
-        pers_list_initial_ids, "personplace", "related_person"
+        pers_list_initial_ids,
+        "personplace",
+        "related_person",
+        secret_token,
+        params.endpoint,
     )
     pers_place_relations_render = gather_render_tasks(
         [pers_place_relations], render_personplace_relation
@@ -1186,7 +1211,11 @@ def create_apis_rdf_serialization_v3(params: Params):
 
     logger.info("Processing person-institution relations")
     pers_inst_relations = fetch_person_relations(
-        pers_list_initial_ids, "personinstitution", "related_person"
+        pers_list_initial_ids,
+        "personinstitution",
+        "related_person",
+        secret_token,
+        params.endpoint,
     )
     pers_inst_relations_render = gather_render_tasks(
         [pers_inst_relations], render_personinstitution_relation
@@ -1197,10 +1226,18 @@ def create_apis_rdf_serialization_v3(params: Params):
 
     logger.info("Processing person-person relations")
     pers_pers_relationsA = fetch_person_relations(
-        pers_list_initial_ids, "personperson", "related_personA"
+        pers_list_initial_ids,
+        "personperson",
+        "related_personA",
+        secret_token,
+        params.endpoint,
     )
     pers_pers_relationsB = fetch_person_relations(
-        pers_list_initial_ids, "personperson", "related_personB"
+        pers_list_initial_ids,
+        "personperson",
+        "related_personB",
+        secret_token,
+        params.endpoint,
     )
     pers_pers_relations_render = gather_render_tasks(
         [pers_pers_relationsA], render_personperson_relation
@@ -1217,6 +1254,8 @@ def create_apis_rdf_serialization_v3(params: Params):
             mapped_filter_key="id",
             entity_type="place",
             return_results_only=True,
+            base_url=params.endpoint,
+            secret_token=secret_token,
         )
         additional_places_render = gather_render_tasks(
             [additional_places], render_place
@@ -1228,6 +1267,8 @@ def create_apis_rdf_serialization_v3(params: Params):
             mapped_filter_key="id",
             entity_type="institution",
             return_results_only=True,
+            base_url=params.endpoint,
+            secret_token=secret_token,
         )
         additional_institutions_render = gather_render_tasks(
             [additional_institutions], render_organization
@@ -1255,6 +1296,9 @@ if __name__ == "__main__":
         params=Params(
             filter_params={"first_name": "Johann"},
             storage_path="/home/sennierer/projects/prosnet-prefect-pipelines/testdata/",
+            endpoint="https://mine.acdh-ch-dev.oeaw.ac.at",
+            base_uri_serialization="https://mine.acdh-ch-dev.oeaw.ac.at",
             branch="test",
+            secret_token="apis-mine-api-token",
         )
     )
