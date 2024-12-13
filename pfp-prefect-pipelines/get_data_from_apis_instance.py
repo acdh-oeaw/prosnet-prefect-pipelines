@@ -1,9 +1,11 @@
+from datetime import time
 from prefect import flow, get_run_logger, task
 from prefect.blocks.system import Secret
 from pydantic import BaseModel, Field, HttpUrl
 import requests
 from rdflib import Graph, URIRef, Dataset
 from typing import Iterator, Literal
+import time
 
 
 @task
@@ -18,7 +20,7 @@ def get_data_from_route(
         params = {"limit": limit, "offset": offset}
         response = requests.get(route, headers=headers, params=params)
         response.raise_for_status()
-
+        time.sleep(5)
         if not response.text.strip():
             break
         if max_objects is not None:
