@@ -3,7 +3,7 @@ from prefect.blocks.system import Secret
 from pydantic import BaseModel, Field, HttpUrl
 import requests
 from rdflib import Graph, URIRef, Dataset
-from typing import Iterator
+from typing import Iterator, Literal
 
 
 @task
@@ -35,23 +35,29 @@ def get_data_from_route(
 
 
 @task
-def combine_ttl_data(ttl_chunks: list[str], named_graph_uri: str) -> Dataset:
+def combine_ttl_data(
+    ttl_chunks: list[str], named_graph_uri: str | None = None
+) -> Dataset | Graph:
     """Combine TTL chunks into a single named graph."""
     logger = get_run_logger()
-    combined_graph = Dataset()
-    context = URIRef(named_graph_uri)
-    g = combined_graph.graph(context)
+    if named_graph_uri is not None:
+        combined_graph = Dataset()
+        context = URIRef(named_graph_uri)
+        g = combined_graph.graph(context)
+    else:
+        g = Graph()
+        combined_graph = g
     for chunk in ttl_chunks:
         g.parse(data=chunk, format="turtle")
-    logger.info(f"Combined {len(combined_graph)} quads into named graph")
+    logger.info(f"Combined {len(combined_graph)} triples into graph")
     return combined_graph
 
 
 @task
-def serialize_to_nquads(graph: Graph, output_path: str):
-    """Serialize the graph to NQuads format."""
+def serialize_graph(graph: Graph, output_path: str, format: str = "ttl"):
+    """Serialize the graph to."""
     logger = get_run_logger()
-    graph.serialize(destination=output_path, format="nquads")
+    graph.serialize(destination=output_path, format=format)
     logger.info(f"Serialized graph to {output_path}")
 
 
@@ -70,8 +76,11 @@ class Params(BaseModel):
         None, description="Routes to use. If nothing is set all will be used."
     )
     api_url: HttpUrl = Field(..., description="Base url of the API endpoint to use.")
-    named_graph_uri: str = Field(..., description="URI for the named graph")
+    named_graph_uri: str | None = Field(None, description="URI for the named graph")
     output_path: str = Field(..., description="Path where to save the NQuads file")
+    graph_format: Literal["ttl", "nq"] = Field(
+        "ttl", description="Graph format to use for serialization."
+    )
 
 
 @flow()
@@ -98,7 +107,7 @@ def get_data_from_apis_instance(params: Params):
     combined_graph = combine_ttl_data(all_ttl_chunks, params.named_graph_uri)
 
     # Serialize to NQuads
-    serialize_to_nquads(combined_graph, params.output_path)
+    serialize_graph(combined_graph, params.output_path, params.graph_format)
 
     return params.output_path
 
@@ -109,7 +118,7 @@ if __name__ == "__main__":
             max_objects=500,
             api_url="http://localhost:8000/apis/api/apis_ontology.",
             routes=["person", "graduiertean"],
-            output_path="test.nq",
-            named_graph_uri="http://test.at",
+            output_path="test",
+            # named_graph_uri="http://test.at",
         )
     )
