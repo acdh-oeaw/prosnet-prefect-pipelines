@@ -1,0 +1,29 @@
+PREFIX owl2: <http://www.w3.org/2002/07/owl#>
+PREFIX pfp: <http://pfp-schema.acdh.oeaw.ac.at/schema#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX crm: <http://www.cidoc-crm.org/cidoc-crm/>
+CONSTRUCT {
+  ?entity pfp:proxy_for ?pfp_uri .
+  ?pfp_uri rdf:type pfp:provided_entity .
+}
+WHERE {
+  {
+    SELECT DISTINCT ?entity ?pfp_uri
+WHERE {
+      {
+        SELECT DISTINCT ?sa_uri ?pfp_uri
+WHERE {
+          [] owl2:sameAs ?sa_uri .
+		  OPTIONAL {
+        [] owl2:sameAs ?sa_uri ;
+		pfp:proxy_for ?uri_exist .
+  }
+      BIND (URI(CONCAT("https://pfp.acdh.oeaw.ac.at/provided_entity/", STRUUID())) AS ?uri_new)
+      BIND (COALESCE(?uri_exist, ?uri_new) AS ?pfp_uri)
+        }
+      }
+      ?entity owl2:sameAs ?sa_uri .
+      
+    }
+  }
+}

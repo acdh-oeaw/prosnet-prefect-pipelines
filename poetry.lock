@@ -1490,6 +1490,48 @@ tzdata = ">=2020.1"
 test = ["time-machine (>=2.6.0)"]
 
 [[package]]
+name = "polars"
+version = "1.20.0"
+description = "Blazingly fast DataFrame library"
+optional = false
+python-versions = ">=3.9"
+files = [
+    {file = "polars-1.20.0-cp39-abi3-macosx_10_12_x86_64.whl", hash = "sha256:9a313e10ea80b99a0d32bfb942b2260b9658155287b0c2ac5876323acaff4f2c"},
+    {file = "polars-1.20.0-cp39-abi3-macosx_11_0_arm64.whl", hash = "sha256:4474bd004376599f7e4906bd350026cbbe805ba604121090578a97f63da15381"},
+    {file = "polars-1.20.0-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:4996e17cb6f57d9aeaf79f66c54ef2913cea7bd025410c076ef8c05d4f7d792a"},
+    {file = "polars-1.20.0-cp39-abi3-manylinux_2_24_aarch64.whl", hash = "sha256:d488ffb92d4934d9c326fa2d0fb2e9a4e3c2c625c59f4a77a77e4acd4d5a0d66"},
+    {file = "polars-1.20.0-cp39-abi3-win_amd64.whl", hash = "sha256:5ce417d2b6d4f3b8f422fcb3482039e8076182cceacbd880175fe970c6f99c84"},
+    {file = "polars-1.20.0-cp39-abi3-win_arm64.whl", hash = "sha256:f474f3d65450138cd2dbab2d9b6041b8646c30fad0b28e6d62457788f994bf62"},
+    {file = "polars-1.20.0.tar.gz", hash = "sha256:e8e9e3156fae02b58e276e5f2c16a5907a79b38617a9e2d731b533d87798f451"},
+]
+
+[package.extras]
+adbc = ["adbc-driver-manager[dbapi]", "adbc-driver-sqlite[dbapi]"]
+all = ["polars[async,cloudpickle,database,deltalake,excel,fsspec,graph,iceberg,numpy,pandas,plot,pyarrow,pydantic,style,timezone]"]
+async = ["gevent"]
+calamine = ["fastexcel (>=0.9)"]
+cloudpickle = ["cloudpickle"]
+connectorx = ["connectorx (>=0.3.2)"]
+database = ["nest-asyncio", "polars[adbc,connectorx,sqlalchemy]"]
+deltalake = ["deltalake (>=0.19.0)"]
+excel = ["polars[calamine,openpyxl,xlsx2csv,xlsxwriter]"]
+fsspec = ["fsspec"]
+gpu = ["cudf-polars-cu12"]
+graph = ["matplotlib"]
+iceberg = ["pyiceberg (>=0.5.0)"]
+numpy = ["numpy (>=1.16.0)"]
+openpyxl = ["openpyxl (>=3.0.0)"]
+pandas = ["pandas", "polars[pyarrow]"]
+plot = ["altair (>=5.4.0)"]
+pyarrow = ["pyarrow (>=7.0.0)"]
+pydantic = ["pydantic"]
+sqlalchemy = ["polars[pandas]", "sqlalchemy"]
+style = ["great-tables (>=0.8.0)"]
+timezone = ["tzdata"]
+xlsx2csv = ["xlsx2csv (>=0.8.0)"]
+xlsxwriter = ["xlsxwriter"]
+
+[[package]]
 name = "prefect"
 version = "2.8.3+2634.g996f70bc8"
 description = "Workflow orchestration and management."
@@ -1753,6 +1795,38 @@ files = [
 
 [package.extras]
 windows-terminal = ["colorama (>=0.4.6)"]
+
+[[package]]
+name = "pyoxigraph"
+version = "0.4.6"
+description = "Python bindings of Oxigraph, a SPARQL database and RDF toolkit"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "pyoxigraph-0.4.6-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:54e45218288520c208930bdfb9d06755a7be91b20c6a8b9512c1d7ac2212b301"},
+    {file = "pyoxigraph-0.4.6-cp310-cp310-musllinux_1_2_x86_64.whl", hash = "sha256:2174e75372d644c797eda724e8dc69fc58443ef17d343eff15fac0fa0640e2a5"},
+    {file = "pyoxigraph-0.4.6-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:79fb6fc233d0e240fdefafd71790b3311e3ca58720f383cfb9a9599894fe0003"},
+    {file = "pyoxigraph-0.4.6-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "sha256:d7f5217b42cee27ebbb376d105a5f098a0acafb1fa6d4198d8e54bad723c2a00"},
+    {file = "pyoxigraph-0.4.6-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:8d08327015488eadb984551faaa61cb3319e5bb8f02b8777756323ccf1bc6788"},
+    {file = "pyoxigraph-0.4.6-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:95673f206ed95546d276ef4c258d92de41d37a75aa2e7eb568921fccf5352b7c"},
+    {file = "pyoxigraph-0.4.6-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:b3424c70f7c1389425366d1f657d465cc410c6b14bdf86150435963abb4c6e04"},
+    {file = "pyoxigraph-0.4.6-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:7374921e02c671544a64b5402ee433cc8b6e2ed16647d12a154435817162c4e7"},
+    {file = "pyoxigraph-0.4.6-cp313-cp313t-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:8d223d22c9e7e8b0e0726a3328916175a48a93959564297e44f7e5f796b05c04"},
+    {file = "pyoxigraph-0.4.6-cp313-cp313t-musllinux_1_2_x86_64.whl", hash = "sha256:a7b1fb9f75b6437988c6b4a9ec7139377180e18bccf6dbc962f0a31345e8a0e0"},
+    {file = "pyoxigraph-0.4.6-cp38-abi3-macosx_10_14_x86_64.macosx_11_0_arm64.macosx_10_14_universal2.whl", hash = "sha256:f1fecee82e2cb07ec52d9586e8a4b677ee416a689c508e21d34f636a84cfab3c"},
+    {file = "pyoxigraph-0.4.6-cp38-abi3-macosx_10_14_x86_64.whl", hash = "sha256:b3efae489e5a8b26de269772a36bc221132dd490ebaa498d2b403747fbd5b0ea"},
+    {file = "pyoxigraph-0.4.6-cp38-abi3-macosx_11_0_arm64.whl", hash = "sha256:6669483b0835414d9de2f830918515cccf35df5ffb1bbb62d6a50cf833fe8df9"},
+    {file = "pyoxigraph-0.4.6-cp38-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:75532da0199f1c8f6e74d9d83ac50b15b22dab616082bd1e369add19cc0681e6"},
+    {file = "pyoxigraph-0.4.6-cp38-abi3-musllinux_1_2_x86_64.whl", hash = "sha256:6f0e15106e74457659b630acf59d735fe7b76e2761fe8f0173bc6cef5ba7fb3e"},
+    {file = "pyoxigraph-0.4.6-cp38-abi3-win_amd64.whl", hash = "sha256:0ebe23d270acae67a4ecd5158e31fdc20d34cf12f23a5abd188d3eb762ad5a7d"},
+    {file = "pyoxigraph-0.4.6-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:08bcb317c343439c5135a3d095f8c6380715a900cc4d0b8726382ec59046831b"},
+    {file = "pyoxigraph-0.4.6-cp38-cp38-musllinux_1_2_x86_64.whl", hash = "sha256:6842c59bf2760d7b494f8d82c6a31b9827b9c294af3772c4fa550e4ba610a7ee"},
+    {file = "pyoxigraph-0.4.6-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:24a55a3961e6f05b4101ebdaa17a38a9a29043c1d40fb871472c48cd4102c738"},
+    {file = "pyoxigraph-0.4.6-cp39-cp39-musllinux_1_2_x86_64.whl", hash = "sha256:e453aa673d7ea0f62f2be62feab4487849d86000a2e7c107b295393ef445446d"},
+    {file = "pyoxigraph-0.4.6-pp310-pypy310_pp73-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:9509fc2b0f65e7f0b59eba703f6041ae40a01ac8b371a3a5b07b4be21fdbf9af"},
+    {file = "pyoxigraph-0.4.6-pp39-pypy39_pp73-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:fc32979caa86db1391a6f2801f374a1b52713109dcf6aa9b79374821d9b07d16"},
+    {file = "pyoxigraph-0.4.6.tar.gz", hash = "sha256:3dc931aedb23a542c486280a02b19d0b0b7e17588ea54c238953e34e60638697"},
+]
 
 [[package]]
 name = "pyparsing"
@@ -2855,4 +2929,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "e014bcfa12d3f430d56d9fbc8a358719c1c88277a6565922161d178678399f8c"
+content-hash = "70455ad239b0bd193298a6ca5bf018ea9f4cf8d3f1ec9414823fe96cf9f4f79a"
