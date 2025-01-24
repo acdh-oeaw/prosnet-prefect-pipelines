@@ -239,11 +239,11 @@ def enrich_via_sparql(params: Params):
     password = Secret.load(params.password_secret).get()
     if params.git_provider == "github":
         remote = f"https://{username}:{password}@github.com/{params.repo}.git"
-    else params.git_provider == "oeaw-gitlab":
+    else:
         remote = f"https://{username}:{password}@gitlab.oeaw.ac.at/{params.repo}.git"
     repo, full_local_path = clone_repo(
-           remote, params.branch_name, params.local_folder, True
-       )
+        remote, params.branch_name, params.local_folder, True
+    )
     graph = create_rdflib_dataset(os.path.join(full_local_path, params.dataset_folder))
     sameas = execute_sparql(
         graph,
