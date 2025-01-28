@@ -234,7 +234,7 @@ class Params(BaseModel):
 
 
 @flow()
-def enrich_via_sparql(params: Params):
+def create_provided_entities(params: Params):
     username = Secret.load(params.username_secret).get()
     password = Secret.load(params.password_secret).get()
     if params.git_provider == "github":
@@ -274,12 +274,12 @@ def enrich_via_sparql(params: Params):
 
 
 if __name__ == "__main__":
-    enrich_via_sparql(
+    create_provided_entities(
         Params(
             repo="acdh-ch/pfp/pfp-source-data",
             username_secret="gitlab-source-data-username",
             password_secret="gitlab-source-data-password",
-            branch_name="origin/pio_branch_9",
+            branch_name="origin/ms/correct-pio-data",
             git_provider="oeaw-gitlab",
         )
     )

@@ -273,37 +273,18 @@ deployments:
             secret_token: "oebl-pfp-api-token"
             limit: 200
             api_url: "https://oebl-pfp.acdh-ch-dev.oeaw.ac.at/apis/api/apis_ontology."
-            output_path: "pio_2024-12-13.ttl"
-            routes:
-              - "person"
-              - "place"
-              - "graduiertean"
-              - "studiertelerntean"
-              - "habilitiertesichan"
-              - "warassistentinan"
-              - "warprivatdozentinan"
-              - "warotitoprofessorinan"
-              - "waraotitaoprofessorinan"
-              - "warhonorarprofessorinan"
-              - "warehrendoktorinan"
-              - "wartaetigfuerwirkteanbei"
-              - "warmitgruenderinvon"
-              - "hatteleitungsfunktionan"
-              - "warmitgliedvon"
-              - "warrektorinan"
-              - "wardekaninan"
-              - "promoviertean"
-              - "warprofessorinan"
-              - "graduiertean"
-              - "warhonorardozentinan"
+            swagger_url: "https://oebl-pfp.acdh-ch-dev.oeaw.ac.at/apis/swagger/schema/"
+            swagger_tags:
+              - "rdfexport"
+            output_path: "pio.ttl"
         push_params:
           repo: "acdh-ch/pfp/pfp-source-data"
           username_secret: "gitlab-source-data-username"
           password_secret: "gitlab-source-data-password"
           git_provider: "oeaw-gitlab"
           branch_name: "pio_branch_4"
-          file_path: "pio_2024-12-13.ttl"
-          file_path_git: "datasets/pio_2024-12-13.ttl"
+          file_path: "pio.ttl"
+          file_path_git: "datasets/pio.ttl"
 
   work_pool:
     name: intavia
