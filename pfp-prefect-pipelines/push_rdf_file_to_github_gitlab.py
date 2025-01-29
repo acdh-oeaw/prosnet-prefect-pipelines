@@ -24,13 +24,25 @@ def create_pr_github(title, branch, token, repo, base):
 
 @task(tags=["gitlab"])
 def create_mr_gitlab(title, branch, token, repo, base):
+    logger = get_run_logger()
     headers = {
         "PRIVATE-TOKEN": token,
     }
     url = f"https://gitlab.oeaw.ac.at/api/v4/projects/{urllib.parse.quote_plus(repo)}/merge_requests"
     form = {"title": title, "source_branch": branch, "target_branch": base}
     res = requests.post(url, headers=headers, json=form)
-    return res
+
+    if res.status_code in [200, 201]:
+        mr_url = res.json().get("web_url")
+        logger.info(f"Successfully created merge request: {mr_url}")
+        return res
+    else:
+        error_msg = res.json().get("message", "No error message provided")
+        logger.error(
+            f"Failed to create merge request. Status code: {res.status_code}. Error: {error_msg}"
+        )
+        logger.debug(f"Full response: {res.text}")
+        raise Exception(f"Failed to create merge request: {error_msg}")
 
 
 @task(tags=["git"])
