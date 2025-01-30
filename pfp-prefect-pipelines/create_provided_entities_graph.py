@@ -13,7 +13,7 @@ import uuid
 
 
 @task()
-def create_rdflib_dataset(local_folder, file_types=["ttl"]):
+def create_rdflib_dataset(local_folder, file_types=["ttl", "nt"]):
     """Create an RDF dataset from all RDF files in the specified folder.
 
     Args:
