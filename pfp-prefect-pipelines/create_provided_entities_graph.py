@@ -256,7 +256,8 @@ def create_provided_entities(params: Params):
         "pfp-prefect-pipelines/sparql/retrieve_provided_entities.sparql",
     )
     # Create path relative to current script location
-    current_dir = os.path.dirname(os.path.abspath(__file__))
+    # current_dir = os.path.dirname(os.path.abspath(__file__))
+    current_dir = os.getcwd()
     output_path = os.path.join(
         current_dir,
         params.local_folder,
