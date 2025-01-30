@@ -261,31 +261,42 @@ deployments:
 - name: pio_data_update
   version:
   tags:
-    - rdf 
-    - qlever
+  - rdf
+  - qlever
   description: Flow that fetches data from APIs and pushes it to a GitLab repository.
   entrypoint: 
     pfp-prefect-pipelines/get_apis_data_and_push_to_repo.py:get_apis_data_and_push_to_gitlab
   parameters:
     params:
-        get_params:
-            accept_header: "text/ttl"
-            secret_token: "oebl-pfp-api-token"
-            limit: 200
-            api_url: "https://oebl-pfp.acdh-ch-dev.oeaw.ac.at/apis/api/apis_ontology."
-            swagger_url: "https://oebl-pfp.acdh-ch-dev.oeaw.ac.at/apis/swagger/schema/"
-            swagger_tags:
-              - "rdfexport"
-            output_path: "pio.ttl"
-        push_params:
-          repo: "acdh-ch/pfp/pfp-source-data"
-          username_secret: "gitlab-source-data-username"
-          password_secret: "gitlab-source-data-password"
-          git_provider: "oeaw-gitlab"
-          branch_name: "pio_branch_4"
-          file_path: "pio.ttl"
-          file_path_git: "datasets/pio.ttl"
+      get_params:
+        accept_header: text/ttl
+        secret_token: oebl-pfp-api-token
+        limit: 200
+        api_url: https://oebl-pfp.acdh-ch-dev.oeaw.ac.at/apis/api/apis_ontology.
+        swagger_url: https://oebl-pfp.acdh-ch-dev.oeaw.ac.at/apis/swagger/schema/
+        swagger_tags:
+        - rdfexport
+        output_path: pio.ttl
+      push_params:
+        repo: acdh-ch/pfp/pfp-source-data
+        username_secret: gitlab-source-data-username
+        password_secret: gitlab-source-data-password
+        git_provider: oeaw-gitlab
+        branch_name: pio_branch_4
+        file_path: pio.ttl
+        file_path_git: datasets/pio.ttl
 
+  work_pool:
+    name: intavia
+    work_queue_name:
+    job_variables: {}
+  schedules: []
+- name: default
+  version:
+  tags: []
+  description:
+  entrypoint: pfp-prefect-pipelines/create_provided_entities_graph.py:create_provided_entities
+  parameters: {}
   work_pool:
     name: intavia
     work_queue_name:
