@@ -165,7 +165,9 @@ def create_provided_entities_graph(
             if ent in ent_index:
                 pre_sa.extend(ent_index[ent])
         if len(pre_sa) == 0:
-            id = oxi.NamedNode(f"{base_ns}/{uuid.uuid4()}".replace("//", "/"))
+            id = oxi.NamedNode(
+                f"{base_ns[:-1] if base_ns.endswith('/') else base_ns}/{uuid.uuid4()}"
+            )
             for e2 in v:
                 ent_index[e2] = [id]
         else:
