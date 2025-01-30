@@ -249,11 +249,11 @@ def create_provided_entities(params: Params):
     graph = create_rdflib_dataset(os.path.join(full_local_path, params.dataset_folder))
     sameas = execute_sparql(
         graph,
-        "sparql/retrieve_sameas.sparql",
+        "pfp-prefect-pipelines/sparql/retrieve_sameas.sparql",
     )
     prov_ent = execute_sparql(
         graph,
-        "sparql/retrieve_provided_entities.sparql",
+        "pfp-prefect-pipelines/sparql/retrieve_provided_entities.sparql",
     )
     # Create path relative to current script location
     current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -281,7 +281,7 @@ if __name__ == "__main__":
             repo="acdh-ch/pfp/pfp-source-data",
             username_secret="gitlab-source-data-username",
             password_secret="gitlab-source-data-password",
-            branch_name="origin/ms/correct-pio-data",
+            branch_name="origin/ms/fix-wrong-provided-entities",
             git_provider="oeaw-gitlab",
         )
     )
