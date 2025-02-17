@@ -233,6 +233,7 @@ class Params(BaseModel):
         "https://pfp-schema.acdh-ch-dev.oeaw.ac.at/schema#",
         description="Base URL to use for the schema/ontology.",
     )
+    commit_message: str = Field("feat: add new provided graph [skip ci]")
 
 
 @flow()
@@ -273,7 +274,7 @@ def create_provided_entities(params: Params):
         params.schema_namespace,
         f"{params.schema_namespace}proxy_for",
     )
-    commit_and_push(repo)
+    commit_and_push(repo, commit_message=params.commit_message)
 
 
 if __name__ == "__main__":
