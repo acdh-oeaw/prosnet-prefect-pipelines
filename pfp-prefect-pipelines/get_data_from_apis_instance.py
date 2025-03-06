@@ -33,17 +33,14 @@ def get_data_from_route(
                 )
                 response.raise_for_status()
 
-                # Pause zwischen den Anfragen
                 time.sleep(5)
 
-                # Überprüfen, ob die Antwort leer ist
                 if not response.text.strip():
                     logger.warning(
                         f"Empty response received from {route} with offset {offset}"
                     )
                     break
 
-                # Überprüfen, ob das Maximum an Objekten erreicht wurde
                 if max_objects is not None and offset >= max_objects:
                     logger.info(f"Reached maximum number of objects ({max_objects})")
                     break
@@ -52,12 +49,6 @@ def get_data_from_route(
                     f"Successfully retrieved data from {route} with offset {offset}"
                 )
                 yield response.text
-
-                # Überprüfen, ob weniger Daten als das Limit zurückgegeben wurden
-                # (Kommentiert, aber du könntest es wieder aktivieren)
-                # if len(response.text.splitlines()) < limit:
-                #    logger.info("Received fewer items than limit, ending pagination")
-                #    break
 
                 offset += limit
 
