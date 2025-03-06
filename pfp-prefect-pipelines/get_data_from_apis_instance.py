@@ -10,30 +10,78 @@ import time
 
 @task
 def get_data_from_route(
-    route: str, headers: dict, limit: int, max_objects: int | None = None
+    route: str,
+    headers: dict,
+    limit: int,
+    max_objects: int | None = None,
+    filters: dict | None = None,
 ) -> Iterator[str]:
     """Fetch data from API route using pagination."""
     logger = get_run_logger()
     offset = 0
 
-    while True:
-        params = {"limit": limit, "offset": offset}
-        response = requests.get(route, headers=headers, params=params)
-        response.raise_for_status()
-        time.sleep(5)
-        if not response.text.strip():
-            break
-        if max_objects is not None:
-            if offset > max_objects:
-                break
+    try:
+        while True:
+            params = {"limit": limit, "offset": offset}
+            if filters is not None:
+                params.update(filters)
 
-        logger.info(f"Retrieved data from {route} with offset {offset}")
-        yield response.text
+            try:
+                logger.info(f"Requesting data from {route} with offset {offset}")
+                response = requests.get(
+                    route, headers=headers, params=params, timeout=30
+                )
+                response.raise_for_status()
 
-        # if len(response.text.splitlines()) < limit:
-        #    break
+                # Pause zwischen den Anfragen
+                time.sleep(5)
 
-        offset += limit
+                # Überprüfen, ob die Antwort leer ist
+                if not response.text.strip():
+                    logger.warning(
+                        f"Empty response received from {route} with offset {offset}"
+                    )
+                    break
+
+                # Überprüfen, ob das Maximum an Objekten erreicht wurde
+                if max_objects is not None and offset >= max_objects:
+                    logger.info(f"Reached maximum number of objects ({max_objects})")
+                    break
+
+                logger.info(
+                    f"Successfully retrieved data from {route} with offset {offset}"
+                )
+                yield response.text
+
+                # Überprüfen, ob weniger Daten als das Limit zurückgegeben wurden
+                # (Kommentiert, aber du könntest es wieder aktivieren)
+                # if len(response.text.splitlines()) < limit:
+                #    logger.info("Received fewer items than limit, ending pagination")
+                #    break
+
+                offset += limit
+
+            except requests.exceptions.HTTPError as e:
+                logger.error(f"HTTP error occurred: {e}")
+                logger.error(f"Response status code: {e.response.status_code}")
+                logger.error(f"Response text: {e.response.text}")
+                raise
+            except requests.exceptions.ConnectionError as e:
+                logger.error(f"Connection error occurred: {e}")
+                raise
+            except requests.exceptions.Timeout as e:
+                logger.error(f"Request timed out: {e}")
+                raise
+            except requests.exceptions.RequestException as e:
+                logger.error(f"Request exception occurred: {e}")
+                raise
+            except Exception as e:
+                logger.error(f"Unexpected error when fetching data from {route}: {e}")
+                raise
+
+    except Exception as e:
+        logger.error(f"Failed to complete data retrieval from {route}: {e}")
+        raise
 
 
 @task
@@ -175,6 +223,10 @@ class Params(BaseModel):
     graph_format: Literal["ttl", "nq"] = Field(
         "ttl", description="Graph format to use for serialization."
     )
+    filters: dict = Field(
+        {},
+        description="Dict to add filter params per route. Use `{'route': {'key': 'value'}}` to add filters. ",
+    )
 
 
 @flow()
@@ -197,7 +249,12 @@ def get_data_from_apis_instance(params: Params):
     all_ttl_chunks = []
     for route in routes:
         logger.info(f"Processing route: {route}")
-        chunks = get_data_from_route(route, headers, params.limit, params.max_objects)
+        filters = None
+        if route in params.filters:
+            filters = params.filters[route]
+        chunks = get_data_from_route(
+            route, headers, params.limit, params.max_objects, filters
+        )
         all_ttl_chunks.extend(chunks)
 
     # Combine data into named graph
@@ -217,7 +274,7 @@ if __name__ == "__main__":
             api_url="https://oebl-pfp.acdh-ch-dev.oeaw.ac.at/apis/api/apis_ontology.",
             swagger_url="https://oebl-pfp.acdh-ch-dev.oeaw.ac.at/apis/swagger/schema/",
             swagger_tags=["rdfexport"],
-            output_path="pio_data_18-1-25.ttl",
+            output_path="pio_data_26-1-25.ttl",
             # named_graph_uri="http://test.at",
         )
     )
