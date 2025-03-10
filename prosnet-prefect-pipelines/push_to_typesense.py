@@ -1,7 +1,9 @@
 from datetime import timedelta
 import prefect
 from pydantic import BaseModel, Field
+from pydantic.types import FilePath
 import typesense
+import json
 
 
 @prefect.task()
@@ -39,6 +41,10 @@ def push_data_to_typesense(client, collection_name, data):
     """Push data to typesense."""
     logger = prefect.get_run_logger()
     logger.info(f"using collection {collection_name}")
+    if not isinstance(data, list):
+        logger.info(f"Loading file from {data}")
+        with open(data, "r") as inp:
+            data = json.load(inp)
     logger.info(f"Pushing {len(data)} items to typesense.")
     res = client.collections[collection_name].documents.import_(
         data, {"action": "upsert"}
@@ -62,14 +68,16 @@ class Params(BaseModel):
         None,
         description="Typesense definition to use, if None, existing collection is used.",
     )
-    data: list = Field(..., description="Data to push to typesense.")
+    data: list | FilePath = Field(
+        ...,
+        description="Data to push to typesense. Either list of objects, or path to data file",
+    )
 
 
 @prefect.flow
 def push_data_to_typesense_flow(params: Params):
     """Push data to typesense."""
     logger = prefect.get_run_logger()
-    logger.info(f"Pushing {len(params.data)} items to typesense.")
     typesense_con = setup_typesense_connection(
         params.typesense_api_key, params.typesense_host
     )

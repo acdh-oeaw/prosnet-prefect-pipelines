@@ -1,8 +1,11 @@
 import csv
 import io
+import json
+import os
 import zipfile
 from prefect import flow, get_run_logger, task
 from pydantic import BaseModel, Field, HttpUrl
+from pydantic.types import PathType
 import requests
 from push_to_typesense import push_data_to_typesense_flow, Params as PushParams
 
@@ -23,11 +26,11 @@ def get_geonames_tsv_file(url: HttpUrl, column_names: list) -> dict:
 
 
 # @task()
-def create_typesense_data(data: list) -> list:
+def create_typesense_data(data: list) -> str:
     """Create typesense data from the geonames data."""
     logger = get_run_logger()
     logger.info(f"Creating typesense data from {len(data)} rows.")
-    return [
+    data = [
         {
             "id": f"https://sws.geonames.org/{row['id']}/",
             "label": f"{row['name']} ({row['country_code']}) - {row['feature_code']}",
@@ -38,6 +41,17 @@ def create_typesense_data(data: list) -> list:
         }
         for row in data
     ]
+
+    output_dir = "/data/typesense/data"
+    os.makedirs(output_dir, exist_ok=True)
+
+    output_file = os.path.join(output_dir, "geonames.json")
+    logger.info(f"Saving data to {output_file}")
+    with open(output_file, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+
+    logger.info(f"Successfully saved {len(data)} records to {output_file}")
+    return output_file
 
 
 class Params(BaseModel):

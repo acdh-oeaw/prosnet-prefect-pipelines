@@ -3,8 +3,8 @@
 # control along with your flow code.
 
 # Generic metadata about this project
-name: prosnet-prefect-pipelines
-prefect-version: 2.8.3+1589.g1dd04fcae
+name: prefect-prosnet-v3
+prefect-version: 3.2.11
 
 # build section allows you to manage and build docker images
 build:
@@ -31,28 +31,140 @@ pull:
     requirements_file: requirements.txt
     stream_output: false
 
+
 # the deployments section allows you to provide configuration for deploying flows
 deployments:
-- name: default
+- name:
   version:
   tags: []
-  description: Create a typesense index from a SPARQL data.
-  entrypoint: 
-    prosnet-prefect-pipelines/wikidata_index.py:create_typesense_index_from_sparql_query
+  description:
+  schedule: {}
+  flow_name:
+  entrypoint:
   parameters: {}
   work_pool:
-    name: intavia
+    name:
     work_queue_name:
     job_variables: {}
-  schedule:
-  is_schedule_active: true
-- name: prosnet_index_wikidata_persons
-  version: 0.1.1
+- name: pio_update
+  version: 0.1.0
+  tags:
+  - PFP
+  - APIS
+  - data
+  concurrency_limit:
+  description: Fetches RDF data from the PIO APIS instance, pushes it to the GitLab
+    source data repo and creates a merge request.
+  entrypoint: 
+    pfp-prefect-pipelines/get_apis_data_and_push_to_repo.py:get_apis_data_and_push_to_gitlab
+  parameters:
+    params:
+      get_params:
+        accept_header: text/ttl
+        secret_token: oebl-pfp-api-token
+        limit: 200
+        api_url: https://oebl-pfp.acdh-ch-dev.oeaw.ac.at/apis/api/apis_ontology.
+        swagger_url: https://oebl-pfp.acdh-ch-dev.oeaw.ac.at/apis/swagger/schema/
+        swagger_tags:
+        - rdfexport
+        output_path: pio.ttl
+      push_params:
+        repo: acdh-ch/pfp/pfp-source-data
+        username_secret: gitlab-source-data-user
+        password_secret: gitlab-source-data-password
+        git_provider: oeaw-gitlab
+        branch_name: pio_branch
+        file_path: pio.ttl
+        file_path_git: datasets/pio.ttl
+        commit_message: 'feat: update PIO data to latest'
+        branch_name_add_date: true
+  work_pool:
+    name: cluster2 workpool
+    work_queue_name:
+    job_variables: {}
+  schedules: []
+- name: prosnet_index_wikidata_organizations
+  version: 0.1.0
   tags:
   - wikidata
   - typesense
   - prosnet
+  - organizations
+  concurrency_limit:
+  description: Create a Organization index from Wikidata. Runs incremental updates
+    every day at 1:00 UTC. Currently the index is limited to organizations located
+    in a predecessor of Austria.
+  entrypoint: 
+    prosnet-prefect-pipelines/wikidata_index.py:create_typesense_index_from_sparql_query
+  parameters:
+    params:
+      limit: 100
+      typesense_definition:
+        name: prosnet-wikidata-organization-index
+        fields:
+        - name: id
+          type: string
+        - name: description
+          type: string
+          optional: true
+        - name: label
+          type: string
+        - name: name
+          type: string
+          optional: true
+        - name: inception
+          type: string
+          optional: true
+        - name: dissolvement
+          type: string
+          optional: true
+      incremental_date: 2
+      typesense_collection_name: prosnet-wikidata-organization-index
+      path_sparql_query: prosnet-prefect-pipelines/sparql/wikidata-organization.sparql
+      field_mapping:
+        organizationLabel: name
+      data_postprocessing_functions:
+        inception: cocatenated_dates_postprocessing
+        dissolvement: cocatenated_dates_postprocessing
+      label_creator_function: label_creator_organization
+  work_pool:
+    name: cluster2 workpool
+    work_queue_name:
+    job_variables: {}
+  schedules: []
+- name: prosnet_index_geonames_places
+  version: 0.1.0
+  tags:
+  - geonames
+  - typesense
+  - prosnet
+  - places
+  concurrency_limit:
+  description: Create a Place index from Geonames. Uses the download page of Geonames
+    to get tsv data and create the index. Currently places with more than 1000 inhabitants
+    are indexed. Currently runs every Monday at 3:00 UTC.
+  entrypoint: 
+    prosnet-prefect-pipelines/geonames_place_index.py:create_typesense_place_index_from_geonames
+  parameters:
+    params:
+      tsv_location: https://download.geonames.org/export/dump/cities1000.zip
+  work_pool:
+    name: cluster2 workpool
+    work_queue_name:
+    job_variables: {}
+  schedules:
+  - cron: 0 3 * * 1
+    timezone: UTC
+    day_or: true
+    active: true
+- name: prosnet_index_wikidata_persons
+  version: 0.1.0
+  tags:
   - persons
+  - prosnet
+  - typesense
+  - wikidata
+  concurrency_limit:
   description: Create a Person index from Wikidata. Runs incremental updates every
     day at 2:00 UTC. Currently the index is limited to persons born in a predecessor
     of Austria.
@@ -98,45 +210,22 @@ deployments:
         date_of_death: date_postprocessing
       label_creator_function: label_creator_person
   work_pool:
-    name: intavia
+    name: cluster2 workpool
     work_queue_name:
     job_variables: {}
-  schedule:
-    cron: 0 2 * * *
+  schedules:
+  - cron: 0 2 * * *
     timezone: UTC
     day_or: true
     active: true
-- name: prosnet_index_geonames_places
-  version: 0.1.1
-  tags:
-  - geonames
-  - typesense
-  - prosnet
-  - places
-  description: Create a Place index from Geonames. Uses the download page of Geonames
-    to get tsv data and create the index. Currently places with more than 1000 inhabitants
-    are indexed. Currently runs every Monday at 3:00 UTC.
-  entrypoint: 
-    prosnet-prefect-pipelines/geonames_place_index.py:create_typesense_place_index_from_geonames
-  parameters:
-    params:
-      tsv_location: https://download.geonames.org/export/dump/cities1000.zip
-  schedule:
-    cron: 0 3 * * 1
-    timezone: UTC
-    day_or: true
-    active: true
-  work_pool:
-    name: intavia
-    work_queue_name:
-    job_variables: {}
 - name: prosnet_index_wikidata_places
-  version: 0.1.1
+  version: 0.1.0
   tags:
-  - wikidata
-  - typesense
-  - prosnet
   - places
+  - wikidata
+  - prosnet
+  - typesense
+  concurrency_limit:
   description: Create a Place index from Wikidata. Runs incremental updates every
     day at 4:00 UTC. Currently the index is limited to places that are cities or higher.
   entrypoint: 
@@ -175,130 +264,36 @@ deployments:
         feature_code: feature_code_postprocessing
       label_creator_function: label_creator_place
   work_pool:
-    name: intavia
+    name: cluster2 workpool
     work_queue_name:
     job_variables: {}
-  schedule:
-    cron: 0 4 * * *
+  schedules:
+  - cron: 0 4 * * *
     timezone: UTC
     day_or: true
     active: true
-- name: prosnet_index_wikidata_organizations
-  version: 0.1.6
-  tags:
-  - wikidata
-  - typesense
-  - prosnet
-  - organizations
-  description: Create a Organization index from Wikidata. Runs incremental updates
-    every day at 1:00 UTC. Currently the index is limited to organizations located
-    in a predecessor of Austria.
-  entrypoint: 
-    prosnet-prefect-pipelines/wikidata_index.py:create_typesense_index_from_sparql_query
-  parameters:
-    params:
-      limit: 100
-      typesense_definition:
-        name: prosnet-wikidata-organization-index
-        fields:
-        - name: id
-          type: string
-        - name: description
-          type: string
-          optional: true
-        - name: label
-          type: string
-        - name: name
-          type: string
-          optional: true
-        - name: inception
-          type: string
-          optional: true
-        - name: dissolvement
-          type: string
-          optional: true
-      incremental_date: 2
-      typesense_collection_name: prosnet-wikidata-organization-index
-      path_sparql_query: prosnet-prefect-pipelines/sparql/wikidata-organization.sparql
-      field_mapping:
-        organizationLabel: name
-      data_postprocessing_functions:
-        inception: cocatenated_dates_postprocessing
-        dissolvement: cocatenated_dates_postprocessing
-      label_creator_function: label_creator_organization
-  work_pool:
-    name: intavia
-    work_queue_name:
-    job_variables: {}
-  schedule:
-    cron: 0 1 * * *
-    timezone: UTC
-    day_or: true
-    active: true
-- name: push-to-pfp-source-data-repo
-  version:
-  tags: []
-  description:
-  entrypoint: pfp-prefect-pipelines/push_rdf_file_to_github_gitlab.py:push_data_to_repo_flow
-  parameters: {}
-  work_pool:
-    name: intavia
-    work_queue_name:
-    job_variables: {}
-  schedules: []
-- name: default
-  version:
-  tags: []
-  description: Flow that fetches data from APIs and pushes it to a GitLab repository.
-  entrypoint: 
-    pfp-prefect-pipelines/get_apis_data_and_push_to_repo.py:get_apis_data_and_push_to_gitlab
-  parameters: {}
-  work_pool:
-    name: intavia
-    work_queue_name:
-    job_variables: {}
-  schedules: []
-- name: pio_data_update
-  version:
-  tags:
-  - rdf
-  - qlever
-  description: Flow that fetches data from APIs and pushes it to a GitLab repository.
-  entrypoint: 
-    pfp-prefect-pipelines/get_apis_data_and_push_to_repo.py:get_apis_data_and_push_to_gitlab
-  parameters:
-    params:
-      get_params:
-        accept_header: text/ttl
-        secret_token: oebl-pfp-api-token
-        limit: 200
-        api_url: https://oebl-pfp.acdh-ch-dev.oeaw.ac.at/apis/api/apis_ontology.
-        swagger_url: https://oebl-pfp.acdh-ch-dev.oeaw.ac.at/apis/swagger/schema/
-        swagger_tags:
-        - rdfexport
-        output_path: pio.ttl
-      push_params:
-        repo: acdh-ch/pfp/pfp-source-data
-        username_secret: gitlab-source-data-username
-        password_secret: gitlab-source-data-password
-        git_provider: oeaw-gitlab
-        branch_name: pio_branch_4
-        file_path: pio.ttl
-        file_path_git: datasets/pio.ttl
 
-  work_pool:
-    name: intavia
-    work_queue_name:
-    job_variables: {}
-  schedules: []
-- name: default
-  version:
-  tags: []
-  description:
+- name: provided_entities_pfp
+  version: 0.1.0
+  tags:
+    - PFP
+    - data 
+  concurrency_limit:
+  description: Pulls a branch from a repo, loads datasets in a local triplestore and creates a provided 
+    entities graph from the triplestore. 
   entrypoint: pfp-prefect-pipelines/create_provided_entities_graph.py:create_provided_entities
-  parameters: {}
+  parameters:
+    params:
+      repo: "acdh-ch/pfp/pfp-source-data"
+      git_provider: "oeaw-gitlab"
+      local_folder: "source-data"
+      dataset_folder: "datasets"
+      password_secret: "gitlab-source-data-password"
+      username_secret: "gitlab-source-data-username"
+      schema_namespace: "https://pfp-schema.acdh-ch-dev.oeaw.ac.at/schema#"
+      file_name_enrichment: "provided_entities.ttl"
   work_pool:
-    name: intavia
+    name: cluster2 workpool
     work_queue_name:
     job_variables: {}
   schedules: []

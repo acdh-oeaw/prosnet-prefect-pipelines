@@ -13,7 +13,7 @@ packages = [
 python = "^3.11"
 typesense = "^0.19.0"
 sparqlwrapper = "^2.0.0"
-prefect = {git = "https://github.com/acdh-oeaw/prefect.git", branch = "v2.20.3"}
+prefect = "^3.2.11" 
 gitpython = "^3.1.43"
 pyoxigraph = "^0.4.6"
 polars = "^1.20.0"
