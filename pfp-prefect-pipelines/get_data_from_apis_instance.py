@@ -196,15 +196,15 @@ class Params(BaseModel):
     max_objects: int | None = Field(
         None, description="Max objects to retrieve. Set to None for all."
     )
-    routes: list = Field(
+    routes: list | None = Field(
         None,
         description="Routes to use. Strings will be appended to the api_url and used as routes.",
     )
-    swagger_url: HttpUrl = Field(
+    swagger_url: HttpUrl | None = Field(
         None,
         description="Url to read API definition from. Needs to return a swagger definition yaml.",
     )
-    swagger_tags: list = Field(
+    swagger_tags: list | None = Field(
         None,
         description="List of tags that should be included in the lost of endpoints.",
     )
