@@ -151,9 +151,7 @@ def create_provided_entities_graph(
             if ent in ent_index:
                 pre_sa.extend(ent_index[ent])
         if len(pre_sa) == 0:
-            id = oxi.NamedNode(
-                f"{base_ns[:-1] if base_ns.endswith('/') else base_ns}/{uuid.uuid4()}"
-            )
+            id = oxi.Literal(str(uuid.uuid4()))
             for e2 in v:
                 ent_index[e2] = [id]
         else:
@@ -234,9 +232,9 @@ def create_provided_entities(params: Params):
         remote = f"https://{username}:{password}@github.com/{params.repo}.git"
     else:
         remote = f"https://{username}:{password}@gitlab.oeaw.ac.at/{params.repo}.git"
-    repo, full_local_path = clone_repo(
-        remote, params.branch_name, params.local_folder, True
-    )
+        repo, full_local_path = clone_repo(
+            remote, params.branch_name, params.local_folder, True
+        )
     all_folders = [os.path.join(full_local_path, params.dataset_folder)]
     for ontology_folder in params.ontology_folders:
         all_folders.append(os.path.join(full_local_path, ontology_folder))
