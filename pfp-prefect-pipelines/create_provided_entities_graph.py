@@ -13,57 +13,43 @@ import uuid
 
 
 @task()
-def create_rdflib_dataset(local_folder, file_types=["ttl", "nt"]):
-    """Create an RDF dataset from all RDF files in the specified folder.
+def create_rdflib_dataset(local_folders, file_types=["ttl", "nt"]):
+    """Create an RDF dataset from all RDF files in the specified folders.
 
     Args:
-        local_folder: Path to folder containing RDF files
+        local_folders: Path or list of paths to folders containing RDF files
         file_types: List of file extensions to consider (without dot)
 
     Returns:
-        rdflib.Dataset: Dataset containing all graphs
+        pyoxigraph.Store: Store containing all graphs
     """
     logger = get_run_logger()
     store = oxi.Store()
+    logger.info("Start creating local RDF store")
 
-    # Walk through all files in the folder
-    for root, _, files in os.walk(local_folder):
-        for file in files:
-            # Check if file has one of the specified extensions
-            if any(file.lower().endswith(f".{ext}") for ext in file_types):
-                file_path = os.path.join(root, file)
+    if isinstance(local_folders, str):
+        local_folders = [local_folders]
 
-                # Determine format based on file extension
+    for folder in local_folders:
+        logger.info(f"Processing directory: {folder}")
 
-                logger.info(f"Processing file: {file_path}")
-                try:
-                    # For N-Quads files which contain named graphs
-                    store.load(path=file_path)
+        # Walk through all files in the folder
+        for root, _, files in os.walk(folder):
+            for file in files:
+                # Check if file has one of the specified extensions
+                if any(file.lower().endswith(f".{ext}") for ext in file_types):
+                    file_path = os.path.join(root, file)
 
-                except Exception as e:
-                    logger.error(f"Error parsing {file_path}: {str(e)}")
-                    raise
-    crm_url = "https://cidoc-crm.org/rdfs/7.1.3/CIDOC_CRM_v7.1.3.rdf"
-    try:
-        import requests
+                    logger.info(f"Processing file: {file_path}")
+                    try:
+                        # Load the file into the store
+                        store.load(path=file_path)
 
-        response = requests.get(crm_url)
-        if response.status_code == 200:
-            # Create a temporary file to store the ontology
+                    except Exception as e:
+                        logger.error(f"Error parsing {file_path}: {str(e)}")
+                        raise
 
-            with tempfile.NamedTemporaryFile(mode="wb", suffix=".rdfs") as tmp:
-                tmp.write(response.content)
-                tmp.flush()
-                store.load(path=tmp.name, format=oxi.RdfFormat.RDF_XML)
-                logger.info("Successfully loaded CIDOC-CRM v7.1.3")
-        else:
-            logger.warning(f"Failed to fetch CIDOC-CRM: {response.status_code}")
-    except Exception as e:
-        logger.error(f"Error loading CIDOC-CRM: {str(e)}")
-        raise
-
-    # Log some statistics
-
+    logger.info(f"Loaded {len(store)} triples/quads into the store")
     return store
 
 
@@ -226,6 +212,10 @@ class Params(BaseModel):
         "datasets",
         description="Relative location of the folder that contains the datasets to use.",
     )
+    ontology_folders: list = Field(
+        ["cidoc-crm"],
+        description="List of additional ontology files to add to the store.",
+    )
     file_name_enrichment: str = Field(
         "provided_entities.ttl", description="Filename to use for the enriched dataset."
     )
@@ -247,7 +237,10 @@ def create_provided_entities(params: Params):
     repo, full_local_path = clone_repo(
         remote, params.branch_name, params.local_folder, True
     )
-    graph = create_rdflib_dataset(os.path.join(full_local_path, params.dataset_folder))
+    all_folders = [os.path.join(full_local_path, params.dataset_folder)]
+    for ontology_folder in params.ontology_folders:
+        all_folders.append(os.path.join(full_local_path, ontology_folder))
+    graph = create_rdflib_dataset(all_folders)
     sameas = execute_sparql(
         graph,
         "pfp-prefect-pipelines/sparql/retrieve_sameas.sparql",
@@ -283,7 +276,7 @@ if __name__ == "__main__":
             repo="acdh-ch/pfp/pfp-source-data",
             username_secret="gitlab-source-data-username",
             password_secret="gitlab-source-data-password",
-            branch_name="origin/ms/fix-wrong-provided-entities",
+            branch_name="origin/main",
             git_provider="oeaw-gitlab",
         )
     )
