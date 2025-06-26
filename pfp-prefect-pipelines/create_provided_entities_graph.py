@@ -10,6 +10,7 @@ from string import Template
 import tempfile
 import json
 import uuid
+from prefect.cache_policies import INPUTS
 
 
 @task()
@@ -53,7 +54,7 @@ def create_rdflib_dataset(local_folders, file_types=["ttl", "nt"]):
     return store
 
 
-@task()
+@task(cache_policy=INPUTS - "graph")
 def execute_sparql(graph, sparql_template):
     logger = get_run_logger()
     with open(sparql_template, "r+") as query:
@@ -95,7 +96,7 @@ def clone_repo(remote, branch, local_folder, force=True):
     return repo, full_local_path
 
 
-@task()
+@task(cache_policy=INPUTS - "graph")
 def create_provided_entities_graph(
     graph: oxi.Store,
     sameas: str,
@@ -163,7 +164,7 @@ def create_provided_entities_graph(
     return output_path
 
 
-@task()
+@task(cache_policy=INPUTS - "graph")
 def serialize_to_file(graph, path):
     with open(path, "ab") as output:
         res = graph.serialize(output=output)
