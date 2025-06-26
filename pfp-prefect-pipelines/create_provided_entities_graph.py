@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, HttpUrl
+from pydantic import BaseModel, Field
 from typing import Literal
 from prefect import flow, get_run_logger, task
 import os
@@ -6,7 +6,6 @@ import shutil
 import git
 import pyoxigraph as oxi
 from prefect.blocks.system import Secret
-from string import Template
 import tempfile
 import json
 import uuid
@@ -158,7 +157,13 @@ def create_provided_entities_graph(
         else:
             id = pre_sa[0]
         for ent in v:
-            graph.add(oxi.Quad(oxi.NamedNode(ent), oxi.NamedNode(proxi_for), id))
+            graph.add(
+                oxi.Quad(
+                    oxi.NamedNode(ent),
+                    oxi.NamedNode(proxi_for),
+                    oxi.Literal(id) if isinstance(id, str) else id,
+                )
+            )
     oxi.serialize(graph, output=output_path, format=oxi.RdfFormat.TURTLE)
 
     return output_path
@@ -273,9 +278,14 @@ if __name__ == "__main__":
     create_provided_entities(
         Params(
             repo="acdh-ch/pfp/pfp-source-data",
-            username_secret="gitlab-source-data-username",
-            password_secret="gitlab-source-data-password",
-            branch_name="origin/main",
+            branch_name="birger/fix-ci",
             git_provider="oeaw-gitlab",
+            local_folder="source-data",
+            commit_message="feat: update provided graph [skip ci]",
+            dataset_folder="datasets",
+            password_secret="gitlab-source-data-password",
+            username_secret="gitlab-source-data-username",
+            schema_namespace="https://pfp-schema.acdh-ch-dev.oeaw.ac.at/schema#",
+            file_name_enrichment="provided_entities.ttl",
         )
     )
