@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field
 from typing import Literal
 from prefect import flow, get_run_logger, task
+from prefect.cache_policies import NO_CACHE
 import os
 import shutil
 import git
@@ -9,10 +10,9 @@ from prefect.blocks.system import Secret
 import tempfile
 import json
 import uuid
-from prefect.cache_policies import INPUTS
 
 
-@task()
+@task(cache_policy=NO_CACHE)
 def create_rdflib_dataset(local_folders, file_types=["ttl", "nt"]):
     """Create an RDF dataset from all RDF files in the specified folders.
 
@@ -53,7 +53,7 @@ def create_rdflib_dataset(local_folders, file_types=["ttl", "nt"]):
     return store
 
 
-@task(cache_policy=INPUTS - "graph")
+@task(cache_policy=NO_CACHE)
 def execute_sparql(graph, sparql_template):
     logger = get_run_logger()
     with open(sparql_template, "r+") as query:
@@ -95,7 +95,30 @@ def clone_repo(remote, branch, local_folder, force=True):
     return repo, full_local_path
 
 
-@task(cache_policy=INPUTS - "graph")
+def merge_shared_values(input_dict):
+    from collections import defaultdict
+
+    # Create a mapping from each value to all keys containing that value
+    value_to_keys = defaultdict(set)
+    for key, values in input_dict.items():
+        for value in values:
+            value_to_keys[value].add(key)
+
+    # Create a new dictionary to store the merged results
+    merged_dict = {}
+
+    # Merge values across all keys that share a common value
+    for key, values in input_dict.items():
+        merged_values = set(values)
+        for value in values:
+            for related_key in value_to_keys[value]:
+                merged_values.update(input_dict[related_key])
+        merged_dict[key] = list(merged_values)
+
+    return merged_dict
+
+
+@task(cache_policy=NO_CACHE)
 def create_provided_entities_graph(
     graph: oxi.Store,
     sameas: str,
@@ -136,6 +159,7 @@ def create_provided_entities_graph(
             sa_index[pers["sa"]["value"]] = [
                 pers["entity"]["value"],
             ]
+    sa_index = merge_shared_values(sa_index)
     ent_index = {}
     for pers in prov_ent_data["results"]["bindings"]:
         if pers["ent"]["value"] in ent_index:
@@ -150,33 +174,36 @@ def create_provided_entities_graph(
         for ent in v:
             if ent in ent_index:
                 pre_sa.extend(ent_index[ent])
+        pre_sa = list(set(pre_sa))
         if len(pre_sa) == 0:
             id = oxi.Literal(str(uuid.uuid4()))
             for e2 in v:
                 ent_index[e2] = [id]
-        else:
-            id = pre_sa[0]
+            pre_sa = [id]
+        elif len(pre_sa) > 1:
+            logger.warning(f"Multiple entities found for {v}")
         for ent in v:
-            graph.add(
-                oxi.Quad(
-                    oxi.NamedNode(ent),
-                    oxi.NamedNode(proxi_for),
-                    oxi.Literal(id) if isinstance(id, str) else id,
+            for id in pre_sa:
+                graph.add(
+                    oxi.Quad(
+                        oxi.NamedNode(ent),
+                        oxi.NamedNode(proxi_for),
+                        oxi.Literal(id) if isinstance(id, str) else id,
+                    )
                 )
-            )
     oxi.serialize(graph, output=output_path, format=oxi.RdfFormat.TURTLE)
 
     return output_path
 
 
-@task(cache_policy=INPUTS - "graph")
+@task(cache_policy=NO_CACHE)
 def serialize_to_file(graph, path):
     with open(path, "ab") as output:
         res = graph.serialize(output=output)
     return res
 
 
-@task()
+@task(cache_policy=NO_CACHE)
 def commit_and_push(repo, commit_message="feat: adds new graph"):
     logger = get_run_logger()
     origin = repo.remote(name="origin")
