@@ -158,7 +158,13 @@ def create_provided_entities_graph(
         else:
             id = pre_sa[0]
         for ent in v:
-            graph.add(oxi.Quad(oxi.NamedNode(ent), oxi.NamedNode(proxi_for), id))
+            graph.add(
+                oxi.Quad(
+                    oxi.NamedNode(ent),
+                    oxi.NamedNode(proxi_for),
+                    oxi.Literal(id) if isinstance(id, str) else id,
+                )
+            )
     oxi.serialize(graph, output=output_path, format=oxi.RdfFormat.TURTLE)
 
     return output_path
