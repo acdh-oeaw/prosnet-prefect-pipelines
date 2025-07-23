@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field, HttpUrl
 from typing import Literal
 from prefect import flow, get_run_logger, task
+from prefect.cache_policies import NO_CACHE
 import os
 import shutil
 import git
@@ -53,7 +54,7 @@ def create_rdflib_dataset(local_folders, file_types=["ttl", "nt"]):
     return store
 
 
-@task()
+@task(cache_policy=NO_CACHE)
 def execute_sparql(graph, sparql_template):
     logger = get_run_logger()
     with open(sparql_template, "r+") as query:
@@ -70,7 +71,7 @@ def execute_sparql(graph, sparql_template):
     return fn
 
 
-@task()
+@task(cache_policy=NO_CACHE)
 def clone_repo(remote, branch, local_folder, force=True):
     logger = get_run_logger()
     full_local_path = os.path.join(os.getcwd(), local_folder)
@@ -163,14 +164,14 @@ def create_provided_entities_graph(
     return output_path
 
 
-@task()
+@task(cache_policy=NO_CACHE)
 def serialize_to_file(graph, path):
     with open(path, "ab") as output:
         res = graph.serialize(output=output)
     return res
 
 
-@task()
+@task(cache_policy=NO_CACHE)
 def commit_and_push(repo, commit_message="feat: adds new graph"):
     logger = get_run_logger()
     origin = repo.remote(name="origin")
