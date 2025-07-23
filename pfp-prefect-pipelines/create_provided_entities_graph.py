@@ -96,6 +96,29 @@ def clone_repo(remote, branch, local_folder, force=True):
     return repo, full_local_path
 
 
+def merge_shared_values(input_dict):
+    from collections import defaultdict
+
+    # Create a mapping from each value to all keys containing that value
+    value_to_keys = defaultdict(set)
+    for key, values in input_dict.items():
+        for value in values:
+            value_to_keys[value].add(key)
+
+    # Create a new dictionary to store the merged results
+    merged_dict = {}
+
+    # Merge values across all keys that share a common value
+    for key, values in input_dict.items():
+        merged_values = set(values)
+        for value in values:
+            for related_key in value_to_keys[value]:
+                merged_values.update(input_dict[related_key])
+        merged_dict[key] = list(merged_values)
+
+    return merged_dict
+
+
 @task()
 def create_provided_entities_graph(
     graph: oxi.Store,
@@ -137,6 +160,7 @@ def create_provided_entities_graph(
             sa_index[pers["sa"]["value"]] = [
                 pers["entity"]["value"],
             ]
+    sa_index = merge_shared_values(sa_index)
     ent_index = {}
     for pers in prov_ent_data["results"]["bindings"]:
         if pers["ent"]["value"] in ent_index:
@@ -155,16 +179,18 @@ def create_provided_entities_graph(
             id = oxi.Literal(str(uuid.uuid4()))
             for e2 in v:
                 ent_index[e2] = [id]
-        else:
-            id = pre_sa[0]
+            pre_sa = [id]
+        elif len(pre_sa) > 1:
+            logger.warning(f"Multiple entities found for {v}")
         for ent in v:
-            graph.add(
-                oxi.Quad(
-                    oxi.NamedNode(ent),
-                    oxi.NamedNode(proxi_for),
-                    oxi.Literal(id) if isinstance(id, str) else id,
+            for id in pre_sa:
+                graph.add(
+                    oxi.Quad(
+                        oxi.NamedNode(ent),
+                        oxi.NamedNode(proxi_for),
+                        oxi.Literal(id) if isinstance(id, str) else id,
+                    )
                 )
-            )
     oxi.serialize(graph, output=output_path, format=oxi.RdfFormat.TURTLE)
 
     return output_path
