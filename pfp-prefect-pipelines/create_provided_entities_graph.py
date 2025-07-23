@@ -209,7 +209,10 @@ def commit_and_push(repo, commit_message="feat: adds new graph"):
     origin = repo.remote(name="origin")
     current_branch = repo.active_branch
     repo.git.add(".")
-    repo.index.commit(commit_message)
+    name = "Prefect[create_provided_entities_graph.py]"
+    email = "noreply@prefect3.acdh-ch-dev.oeaw.ac.at"
+    author = git.Actor(name, email)
+    repo.index.commit(commit_message, author=author, committer=author)
     origin.push(refspec=f"{current_branch}:{current_branch}")
     logger.info("Pushed everything to remote")
     return True
