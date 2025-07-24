@@ -1,5 +1,0 @@
-PREFIX pfps: <https://pfp-schema.acdh-ch-dev.oeaw.ac.at/schema#>
-
-SELECT ?ent ?prov_ent WHERE {
-?ent pfps:proxy_for ?prov_ent .
-}

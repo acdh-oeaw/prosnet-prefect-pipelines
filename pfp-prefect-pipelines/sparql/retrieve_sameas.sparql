@@ -1,6 +1,0 @@
-PREFIX crm: <http://www.cidoc-crm.org/cidoc-crm/>
-PREFIX owl: <http://www.w3.org/2002/07/owl#>
-SELECT ?entity ?sa  WHERE {
-{?entity a crm:E21_Person } Union {?entity a crm:E74_Group } Union {?entity a crm:E53_Place}
-OPTIONAL {?entity owl:sameAs ?sa}
-}

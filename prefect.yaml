@@ -272,28 +272,3 @@ deployments:
     timezone: UTC
     day_or: true
     active: true
-
-- name: provided_entities_pfp
-  version: 0.1.0
-  tags:
-    - PFP
-    - data 
-  concurrency_limit:
-  description: Pulls a branch from a repo, loads datasets in a local triplestore and creates a provided 
-    entities graph from the triplestore. 
-  entrypoint: pfp-prefect-pipelines/create_provided_entities_graph.py:create_provided_entities
-  parameters:
-    params:
-      repo: "acdh-ch/pfp/pfp-source-data"
-      git_provider: "oeaw-gitlab"
-      local_folder: "source-data"
-      dataset_folder: "datasets"
-      password_secret: "gitlab-source-data-password"
-      username_secret: "gitlab-source-data-username"
-      schema_namespace: "https://pfp-schema.acdh-ch-dev.oeaw.ac.at/schema#"
-      file_name_enrichment: "provided_entities.ttl"
-  work_pool:
-    name: cluster2 workpool
-    work_queue_name:
-    job_variables: {}
-  schedules: []
