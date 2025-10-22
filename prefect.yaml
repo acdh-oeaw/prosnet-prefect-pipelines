@@ -25,11 +25,11 @@ pull:
     repository: https://github.com/acdh-oeaw/prosnet-prefect-pipelines.git
     branch: main
     access_token:
-- prefect.deployments.steps.pip_install_requirements:
-    id: install-deps-project
+- prefect.deployments.steps.run_shell_script:
+    id: install dependencies
+    script: pip install .
     directory: '{{ clone-step.directory }}'
-    requirements_file: requirements.txt
-    stream_output: false
+
 
 
 # the deployments section allows you to provide configuration for deploying flows
