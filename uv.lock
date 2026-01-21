@@ -996,7 +996,7 @@ requires-dist = [
     { name = "gitpython", specifier = "==3.1.46" },
     { name = "prefect", specifier = ">=3.2.11" },
     { name = "sparqlwrapper", specifier = "==2.0.0" },
-    { name = "typesense", specifier = "==0.19.0" },
+    { name = "typesense", specifier = "==1.3.0" },
 ]
 
 [package.metadata.requires-dev]
@@ -1710,14 +1710,15 @@ wheels = [
 
 [[package]]
 name = "typesense"
-version = "0.19.0"
+version = "1.3.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "requests" },
+    { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/7d/42/ccc9a028ff0a253c463e082f6c69bb4e90ce47094c874e3f8c78a489ea7d/typesense-0.19.0.tar.gz", hash = "sha256:21cf6897eceb2cd3c9cab3d7372b3c4cd1ea88d1a57d4cce058d5a0518f0121b", size = 13391, upload-time = "2024-01-03T00:54:06.304Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/03/73/98fb4ff68278b7d24730730853586825aed9107b73162c8f20fc8c76ac8b/typesense-1.3.0.tar.gz", hash = "sha256:96b9fd600b903e252601e6680fc25285f5ee0eb49153fb6758e97d2467aa5f52", size = 51875, upload-time = "2025-11-14T16:28:25.814Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e2/69/322dbd77563690b94e29245bafe6564f2e583fee8cc028759300a09a834e/typesense-0.19.0-py3-none-any.whl", hash = "sha256:4c7447f8cc6be456abb420cd6a39e52afa50afa4d10d8313cc8afb2b70e15d87", size = 19441, upload-time = "2024-01-03T00:54:04.651Z" },
+    { url = "https://files.pythonhosted.org/packages/58/6c/a5ad6e25b57c04934d4304fab9eb05f1dd547af02c4cd4c63e6f17488374/typesense-1.3.0-py3-none-any.whl", hash = "sha256:d05ab55634d249ee1a8a82cc8d01cef8fa995c9ae98665ca4aad1e2d7055321f", size = 84287, upload-time = "2025-11-14T16:28:24.516Z" },
 ]
 
 [[package]]
